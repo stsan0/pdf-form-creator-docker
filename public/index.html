@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Form Creator and Editor</title>
+  <style>
+    #pdf-container {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <!-- Use the ECMAScript module syntax -->
+  <script type = "module">
+    import * as pdfjsLib from '../node_modules/pdfjs-dist/build/pdf.mjs';
+    import { PDFDocument } from '../node_modules/pdf-lib/dist/pdf-lib.js';
+
+    let pdfDoc = null;
+    let pdfForm = null;
+
+    async function loadPdf() {
+      const fileInput = document.getElementById('pdf-file-input');
+      const file = fileInput.files[0];
+
+      if (file) {
+        const data = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data }).promise;
+        renderPdf();
+      }
+    }
+
+    function renderPdf() {
+      const pdfContainer = document.getElementById('pdf-container');
+      // Loop through each page of the PDF document
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        // Get the page object for the current page
+        pdfDoc.getPage(pageNum).then(page => {
+          // Create a canvas element for rendering the page
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.style.border = '1px solid #ddd';
+          pdfContainer.appendChild(canvas);
+          
+          // Get the viewport for the current page
+          const viewport = page.getViewport({ scale: 1.5 });
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+          
+          // Render the page onto the canvas
+          page.render({ canvasContext: context, viewport });
+        });
+      }
+    }
+
+    async function createForm() {
+      if (!pdfDoc) return;
+
+      pdfForm = await PDFDocument.create();
+      const pages = await pdfForm.copyPages(pdfDoc, Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1));
+      pages.forEach(page => pdfForm.addPage(page));
+
+      const textField = pdfForm.createTextField('text-field');
+      textField.setText('Type something');
+      pdfForm.getPages()[0].getWidgets()[0].addTextField(textField);
+
+      const modifiedPdfBytes = await pdfForm.save();
+      downloadPdf(modifiedPdfBytes, 'modified.pdf');
+    }
+
+    async function editForm() {
+      if (!pdfForm) return;
+
+      // Update form field values or perform other edits
+
+      const modifiedPdfBytes = await pdfForm.save();
+      downloadPdf(modifiedPdfBytes, 'modified.pdf');
+    }
+
+    function downloadPdf(data, filename) {
+      const blob = new Blob([data], { type: 'application/pdf' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+    }
+  </script>
+  <input type="file" id="pdf-file-input" accept=".pdf">
+  <button onclick="loadPdf()">Load PDF</button>
+  <button onclick="createForm()">Create Form</button>
+  <button onclick="editForm()">Edit Form</button>
+  <div id="pdf-container"></div>
+</body>
+</html>
