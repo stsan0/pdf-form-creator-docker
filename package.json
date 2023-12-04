@@ -9,8 +9,7 @@
     "pdf.js": "^0.1.0",
     "pdfjs": "^2.5.2",
     "pdfjs-dist": "^4.0.269",
-    "pspdfkit": "^2023.5.3",
-    "type": "module"
+    "pspdfkit": "^2023.5.3"
   },
   "name": "pdf-form-creator-docker",
   "version": "1.0.0",

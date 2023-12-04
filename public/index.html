@@ -11,7 +11,14 @@
   <script type = "module">
     import * as pdfjsLib from './pdfjs-dist/build/pdf.mjs';
     import * as pdflib from './pdf-lib/dist/pdf-lib.js';
+    
+    //  Error: No "GlobalWorkerOptions.workerSrc" specified
+    pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.mjs';
 
+    document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
+    document.getElementById("createFormBtn").addEventListener("click", createForm)
+    document.getElementById("editFormBtn").addEventListener("click", editForm)
+    
     let pdfDoc = null;
     let pdfForm = null;
 
@@ -90,9 +97,9 @@
   </ul>
   <input type="file" id="pdf-file-input" accept=".pdf"> </input>
   <div id = "selector">
-    <button onclick="loadPdf()">Load PDF</button>
-    <button onclick="createForm()">Create Form</button>
-    <button onclick="editForm()">Edit Form</button>
+    <button id="loadPdfBtn">Load PDF</button>
+    <button id="createFormBtn">Create Form</button>
+    <button id="editFormBtn">Edit Form</button>
   </div>
   <div id="pdf-container"></div>
 </body>
