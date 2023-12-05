@@ -30,8 +30,44 @@
         const data = await file.arrayBuffer();
         pdfDoc = await pdfjsLib.getDocument({ data }).promise;
         renderPdf();
+        showFieldValues();
       }
     }
+
+    export async function showFieldValues(){
+     const fieldsContainer = document.getElementById('fields-container');
+     let fieldValues = extractText().then(function(fieldValues){
+     console.log(fieldValues);
+     //fieldsContainer.innerHTML = (fieldValues);
+      fieldsContainer.innerHTML = JSON.stringify(fieldValues, null, 2);
+     }
+     );
+    }
+
+    // get the fieldValues from a PDF form
+    async function extractText() {
+      var result = {};                
+      var pages = pdfDoc.numPages;
+      for (var i = 1; i <= pages; i++) {
+          var page = await pdfDoc.getPage(i);
+          var annotations = await page.getAnnotations();
+          for (var j = 0; j < annotations.length; j++) {
+              var element = annotations[j];
+              // Field Name
+              if (element.fieldValue != ""){
+                result[element.fieldName] = element.fieldValue;
+              }
+              // result[element.fieldName] = element.fieldValue;
+             // console.log(element.fieldName + " has the value of " + result[element.fieldName])
+                                                
+          }             
+      };              
+      //console.log(result + " has the entries of " + Object.entries(result));
+      return result;
+  }
+      
+      // show the field values in the HTML
+      //fieldscontainer.innerHTML = JSON.stringify(fieldValues, null, 2);
 
     export function renderPdf() {
       const pdfContainer = document.getElementById('pdf-container');
@@ -89,18 +125,16 @@
     }
     
   </script>
-  <ul>
-    <li><a href="default.asp">Home</a></li>
-    <li><a href="news.asp">News</a></li>
-    <li><a href="contact.asp">Contact</a></li>
-    <li><a href="about.asp">About</a></li>
+  <ul class="flex items-center divide-x dark:text-white dark:divide-gray-700 text-gray-800 divide-gray-200">
+    <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">Freightgate</h1>
   </ul>
   <input type="file" id="pdf-file-input" accept=".pdf"> </input>
-  <div id = "selector">
+  <div id = "selector" class="absolute xl:static  bottom-0 narrow:h-full vkeyboard:h-full md:h-full xl:border-r-2 xl:border-gray-100 xl:border-solid xl:dark:border-gray-1000 xl:dark:border-r z-10  h-[65%] translate-x-0">
     <button id="loadPdfBtn">Load PDF</button>
     <button id="createFormBtn">Create Form</button>
     <button id="editFormBtn">Edit Form</button>
   </div>
-  <div id="pdf-container"></div>
+  <div id="pdf-container" class="flex flex-1 justify-center w-full bg-gray-100 h-full dark:bg-gray-950 overflow-hidden"></div>
+  <div id = "fields-container"></div>
 </body>
 </html>
