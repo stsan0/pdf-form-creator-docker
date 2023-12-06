@@ -22,6 +22,7 @@
     let pdfDoc = null;
     let pdfForm = null;
     let canvas = document.getElementById('canvas');
+    let lastDrag = null;
 
     async function loadPdf() {
       const fileInput = document.getElementById('pdf-file-input');
@@ -40,7 +41,6 @@
       if (file) {
       const fieldsContainer = document.getElementById('fields-container');
       let fieldValues = extractText().then(function(fieldValues){
-        console.log(fieldValues);
         //fieldsContainer.innerHTML = (fieldValues);
           fieldsContainer.innerHTML = JSON.stringify(fieldValues, null, 2);
         }
@@ -112,11 +112,22 @@
       link.download = filename;
       link.click();
     }
-
+    let startX = null;
+    let startY = null;
+    
     // Add event listener for toolbox field drag start
     const toolboxFields = document.querySelectorAll('.toolbox-field');
     toolboxFields.forEach(toolboxField => {
         toolboxField.addEventListener('dragstart', function (event) {
+            const target = event.target.getBoundingClientRect();
+            lastDrag = event.target;
+            startX = event.clientX - target.x;
+            startY = event.clientY - target.y;
+
+            if (event.target.className == 'editable-field'){
+              
+              event.target.remove();
+            }
             event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
         });
     });    
@@ -125,13 +136,17 @@
     canvas.addEventListener('drop', function (event) {
         event.preventDefault();
         const fieldName = event.dataTransfer.getData('text/plain');
-        const offsetX = event.clientX - canvas.getBoundingClientRect().left;
-        const offsetY = event.clientY - canvas.getBoundingClientRect().top;
-
-        const editableField = createEditableField(offsetX, offsetY, fieldName).then(function(editableField){
-          canvas.appendChild(editableField);
+        const offsetX = event.clientX -startX; //- canvas.getBoundingClientRect().left;
+        const offsetY = event.clientY -startY; //- canvas.getBoundingClientRect().top;
+        
+        if (lastDrag.className == 'editable-field'){
+          lastDrag.style.left = offsetX + 'px';
+          lastDrag.style.top = offsetY + 'px';  
+          } else {          
+          const editableField = createEditableField(offsetX, offsetY, fieldName).then(function(editableField){
+          canvas.after(editableField);
         });
-                    
+        }        
      });
 
      // Prevent default behavior to allow drop
@@ -145,19 +160,44 @@
         field.className = 'editable-field';
         field.style.left = left + 'px';
         field.style.top = top + 'px';
-        field.innerText = initialValue;
+        field.innerText = 'undefined';
+        field.draggable = true;
+        field.style.width = '100px';
 
         // Add event listener to capture changes to the name
-        field.addEventListener('click', function () {
+        field.addEventListener('click', function (event) {
+            let o = '100px';
+            if (event.target.hasAttribute('data-width') ){
+             o = event.target.getAttribute('data-width');
+          }
+          console.log('...' + event.target.style.width, o);
+        if (event.target.style.width != o){
+          event.target.setAttribute('data-width',event.target.style.width);
+
+          console.log('width changed to ' + event.target.style.width);
+          return;
+         }
             const newName = prompt('Enter a new name:', field.innerText);
             if (newName !== null) {
                 field.innerText = newName;
                 console.log('Updated name:', newName);
+                
                   // You can send this newName to the server for further processing
             }
         })
+        field.addEventListener('dragstart', function (event) {
+            //const target = event.target.getBoundingClientRect();
+            //startX = event.clientX - target.x;
+            //startY = event.clientY - target.y;
+              //event.target.remove();
+
+              lastDrag = event.target;
+        });
         return field;
+
     }          
+ // set font, size and color 
+ // flatten and save the field to pdf
   </script>
   <ul class="flex items-center divide-x dark:text-white dark:divide-gray-700 text-gray-800 divide-gray-200">
     <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">Freightgate</h1>
