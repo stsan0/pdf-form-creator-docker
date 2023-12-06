@@ -128,8 +128,10 @@
         const offsetX = event.clientX - canvas.getBoundingClientRect().left;
         const offsetY = event.clientY - canvas.getBoundingClientRect().top;
 
-        const editableField = createEditableField(offsetX, offsetY, fieldName);
-                    canvas.appendChild(editableField);
+        const editableField = createEditableField(offsetX, offsetY, fieldName).then(function(editableField){
+          canvas.appendChild(editableField);
+        });
+                    
      });
 
      // Prevent default behavior to allow drop
@@ -138,7 +140,7 @@
      });
 
     // Create editable field
-    function createEditableField(left, top, initialValue) {        
+    async function createEditableField(left, top, initialValue) {        
         const field = document.createElement('div');
         field.className = 'editable-field';
         field.style.left = left + 'px';
