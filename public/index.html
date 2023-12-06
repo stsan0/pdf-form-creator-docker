@@ -190,7 +190,8 @@
       const fontSize = document.getElementById('fontSize').value;
       const fontColor = document.getElementById('fontColor').value;
       const fontStyle = document.getElementById('fontStyle').value;
-      updateTextFieldFontProperties(field, fontSize, fontColor, fontStyle);
+      const fontFamily = document.getElementById('fontFamily').value;
+      updateTextFieldFontProperties(field, fontSize, fontColor, fontStyle, fontFamily);
 
       // Add event listener to capture changes to the name
       field.addEventListener('click', function (event) {
@@ -225,24 +226,13 @@
     }
 
     // Function to update the text field with user-defined font properties
-    function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle) {
+    function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle, fontFamily) {
       // get the text field from the toolbox and update its font properties
-      textField.style.fontSize = fontSize;
-      textField.style.fontColor = fontColor;
-
-      switch (fontStyle) {
-        case 'normal':
-          textField.style.fontStyle = 'normal';
-          break;
-        case 'italic':
-          textField.style.fontStyle = 'italic';
-          break;
-        case 'bold':
-          textField.style.fontStyle = 'bold';
-          break;
-        default:
-          break;
-      }
+      console.log("updateTextFieldFontProperties: " + fontSize + " " + fontColor + " " + fontStyle + " " + fontFamily)
+      textField.style.fontSize = (fontSize + "px");
+      textField.style.color = fontColor;
+      textField.style.fontFamily = fontFamily;
+      textField.style.fontStyle = fontStyle;
     }
 
 
@@ -267,15 +257,23 @@
     <div id="fontControls">
       <label for="fontSize">Font Size:</label>
       <input type="number" id="fontSize" value="12" min="6" max="48">
-
+      <br></br>
       <label for="fontColor">Font Color:</label>
       <input type="color" id="fontColor" value="#000000">
-
+      <br></br>
       <label for="fontStyle">Font Style:</label>
       <select id="fontStyle">
         <option value="normal">Normal</option>
         <option value="italic">Italic</option>
-        <option value="bold">Bold</option>
+      </select>
+
+      <select id="fontFamily">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="sans-serif">sans-serif</option>
       </select>
     </div>
   </div>
