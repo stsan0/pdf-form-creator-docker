@@ -66,4 +66,12 @@ li a {
  #toolbox-field{
   width: 100px;
   height: 12px;
+  border: 1px solid #ccc;
+  background: #eee;
+
+
  }
+
+#fontControls{
+  margin-top:10px;
+}

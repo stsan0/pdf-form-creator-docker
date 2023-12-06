@@ -1,25 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Form Creator and Editor</title>
   <link rel="stylesheet" href="index.css">
 </head>
+
 <body>
   <!-- Use the ECMAScript module syntax -->
-  <script type = "module">
+  <script type="module">
     import * as pdfjsLib from './pdfjs-dist/build/pdf.mjs';
     import * as pdflib from './pdf-lib/dist/pdf-lib.js';
-    
+
     //  Error: No "GlobalWorkerOptions.workerSrc" specified
     pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.mjs';
 
     document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
     document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
     document.getElementById("editFormBtn").addEventListener("click", editForm)
-    
+
     let pdfDoc = null;
+    let page;
     let pdfForm = null;
     let canvas = document.getElementById('canvas');
     let lastDrag = null;
@@ -35,43 +38,43 @@
       }
     }
 
-    export async function showFieldValues(){
-     const fileInput = document.getElementById('pdf-file-input');
-     const file = fileInput.files[0];
+    export async function showFieldValues() {
+      const fileInput = document.getElementById('pdf-file-input');
+      const file = fileInput.files[0];
       if (file) {
-      const fieldsContainer = document.getElementById('fields-container');
-      let fieldValues = extractText().then(function(fieldValues){
-        //fieldsContainer.innerHTML = (fieldValues);
+        const fieldsContainer = document.getElementById('fields-container');
+        let fieldValues = extractText().then(function (fieldValues) {
+          //fieldsContainer.innerHTML = (fieldValues);
           fieldsContainer.innerHTML = JSON.stringify(fieldValues, null, 2);
         }
-       );
-     }
+        );
+      }
     }
 
     // get the fieldValues from a PDF form
     async function extractText() {
-      var result = {};                
+      var result = {};
       var pages = pdfDoc.numPages;
       for (var i = 1; i <= pages; i++) {
-          var page = await pdfDoc.getPage(i);
-          var annotations = await page.getAnnotations();
-          for (var j = 0; j < annotations.length; j++) {
-              var element = annotations[j];
-              // Field Name
-              if (element.fieldValue != ""){
-                result[element.fieldName] = element.fieldValue;
-              }
-              // result[element.fieldName] = element.fieldValue;
-             // console.log(element.fieldName + " has the value of " + result[element.fieldName])
-                                                
-          }             
-      };              
+        var page = await pdfDoc.getPage(i);
+        var annotations = await page.getAnnotations();
+        for (var j = 0; j < annotations.length; j++) {
+          var element = annotations[j];
+          // Field Name
+          if (element.fieldValue != "") {
+            result[element.fieldName] = element.fieldValue;
+          }
+          // result[element.fieldName] = element.fieldValue;
+          // console.log(element.fieldName + " has the value of " + result[element.fieldName])
+
+        }
+      };
       //console.log(result + " has the entries of " + Object.entries(result));
       return result;
-  }
-      
-      // show the field values in the HTML
-      //fieldscontainer.innerHTML = JSON.stringify(fieldValues, null, 2);
+    }
+
+    // show the field values in the HTML
+    //fieldscontainer.innerHTML = JSON.stringify(fieldValues, null, 2);
 
     export function renderPdf() {
       const pdfContainer = document.getElementById('pdf-container');
@@ -84,12 +87,12 @@
           const context = canvas.getContext('2d');
           canvas.style.border = '1px solid #ddd';
           pdfContainer.appendChild(canvas);
-          
+
           // Get the viewport for the current page
           const viewport = page.getViewport({ scale: 1.5 });
           canvas.height = viewport.height;
           canvas.width = viewport.width;
-          
+
           // Render the page onto the canvas
           page.render({ canvasContext: context, viewport });
         });
@@ -97,11 +100,31 @@
     }
 
     export async function editForm() {
-      if (!pdfForm) return;
+      if (!pdfDoc) return;
+      // add editable-fields on top of pdf
+      const fieldsContainer = document.getElementById('fields-container');
+      const editableFields = document.querySelectorAll('.editable-field');
+      editableFields.forEach(editableField => {
+        const fieldName = editableField.innerText;
+        //const field = pdfDoc.getField(fieldName);
+        const target = editableField.getBoundingClientRect();
+        //const { x, y, width, height } = {target.x, target.y, target.width, target.height};
+        const x = target.x;
+        const y = target.y;
+        const width = target.width;
+        const height = target.height;
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+          // Get the page object for the current page
+          pdfDoc.getPage(pageNum).then(page => {
+            pdfDoc.drawText(fieldName, { x, y, width, height });
+          });
+          //field.updateAppearances();
+          //editableField.remove();
+        }
+      });
 
-      // Update form field values or perform other edits
-
-      const modifiedPdfBytes = await pdfForm.save();
+      // save to pdf
+      const modifiedPdfBytes = await pdfDoc.save();
       downloadPdf(modifiedPdfBytes, 'modified.pdf');
     }
 
@@ -114,107 +137,149 @@
     }
     let startX = null;
     let startY = null;
-    
+
     // Add event listener for toolbox field drag start
     const toolboxFields = document.querySelectorAll('.toolbox-field');
     toolboxFields.forEach(toolboxField => {
-        toolboxField.addEventListener('dragstart', function (event) {
-            const target = event.target.getBoundingClientRect();
-            lastDrag = event.target;
-            startX = event.clientX - target.x;
-            startY = event.clientY - target.y;
+      toolboxField.addEventListener('dragstart', function (event) {
+        const target = event.target.getBoundingClientRect();
+        lastDrag = event.target;
+        startX = event.clientX - target.x;
+        startY = event.clientY - target.y;
 
-            if (event.target.className == 'editable-field'){
-              
-              event.target.remove();
-            }
-            event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
-        });
-    });    
+        if (event.target.className == 'editable-field') {
+
+          event.target.remove();
+        }
+        event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
+      });
+    });
 
     // Add event listener for canvas drop
     canvas.addEventListener('drop', function (event) {
-        event.preventDefault();
-        const fieldName = event.dataTransfer.getData('text/plain');
-        const offsetX = event.clientX -startX; //- canvas.getBoundingClientRect().left;
-        const offsetY = event.clientY -startY; //- canvas.getBoundingClientRect().top;
-        
-        if (lastDrag.className == 'editable-field'){
-          lastDrag.style.left = offsetX + 'px';
-          lastDrag.style.top = offsetY + 'px';  
-          } else {          
-          const editableField = createEditableField(offsetX, offsetY, fieldName).then(function(editableField){
+      event.preventDefault();
+      const fieldName = event.dataTransfer.getData('text/plain');
+      const offsetX = event.clientX - startX; //- canvas.getBoundingClientRect().left;
+      const offsetY = event.clientY - startY; //- canvas.getBoundingClientRect().top;
+
+      if (lastDrag.className == 'editable-field') {
+        lastDrag.style.left = offsetX + 'px';
+        lastDrag.style.top = offsetY + 'px';
+      } else {
+        const editableField = createEditableField(offsetX, offsetY, fieldName).then(function (editableField) {
           canvas.after(editableField);
         });
-        }        
-     });
+      }
+    });
 
-     // Prevent default behavior to allow drop
+    // Prevent default behavior to allow drop
     canvas.addEventListener('dragover', function (event) {
-                    event.preventDefault();
-     });
+      event.preventDefault();
+    });
 
     // Create editable field
-    async function createEditableField(left, top, initialValue) {        
-        const field = document.createElement('div');
-        field.className = 'editable-field';
-        field.style.left = left + 'px';
-        field.style.top = top + 'px';
-        field.innerText = 'undefined';
-        field.draggable = true;
-        field.style.width = '100px';
+    async function createEditableField(left, top, initialValue) {
+      const field = document.createElement('div');
+      field.className = 'editable-field';
+      field.style.left = left + 'px';
+      field.style.top = top + 'px';
+      field.innerText = 'undefined';
+      field.draggable = true;
+      field.style.width = '100px';
+      // use the html font size, font color, font style values to update the editable-field's font properties
+      const fontSize = document.getElementById('fontSize').value;
+      const fontColor = document.getElementById('fontColor').value;
+      const fontStyle = document.getElementById('fontStyle').value;
+      updateTextFieldFontProperties(field, fontSize, fontColor, fontStyle);
 
-        // Add event listener to capture changes to the name
-        field.addEventListener('click', function (event) {
-            let o = '100px';
-            if (event.target.hasAttribute('data-width') ){
-             o = event.target.getAttribute('data-width');
-          }
-          console.log('...' + event.target.style.width, o);
-        if (event.target.style.width != o){
-          event.target.setAttribute('data-width',event.target.style.width);
+      // Add event listener to capture changes to the name
+      field.addEventListener('click', function (event) {
+        let o = '100px';
+        if (event.target.hasAttribute('data-width')) {
+          o = event.target.getAttribute('data-width');
+        }
+        console.log('...' + event.target.style.width, o);
+        if (event.target.style.width != o) {
+          event.target.setAttribute('data-width', event.target.style.width);
 
           console.log('width changed to ' + event.target.style.width);
           return;
-         }
-            const newName = prompt('Enter a new name:', field.innerText);
-            if (newName !== null) {
-                field.innerText = newName;
-                console.log('Updated name:', newName);
-                
-                  // You can send this newName to the server for further processing
-            }
-        })
-        field.addEventListener('dragstart', function (event) {
-            //const target = event.target.getBoundingClientRect();
-            //startX = event.clientX - target.x;
-            //startY = event.clientY - target.y;
-              //event.target.remove();
+        }
+        const newName = prompt('Enter a new name:', field.innerText);
+        if (newName !== null) {
+          field.innerText = newName;
+          console.log('Updated name:', newName);
 
-              lastDrag = event.target;
-        });
-        return field;
+          // You can send this newName to the server for further processing
+        }
+      })
+      field.addEventListener('dragstart', function (event) {
+        //const target = event.target.getBoundingClientRect();
+        //startX = event.clientX - target.x;
+        //startY = event.clientY - target.y;
+        //event.target.remove();
 
-    }          
- // set font, size and color 
- // flatten and save the field to pdf
+        lastDrag = event.target;
+      });
+      return field;
+    }
+
+    // Function to update the text field with user-defined font properties
+    function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle) {
+      // get the text field from the toolbox and update its font properties
+      textField.style.fontSize = fontSize;
+      textField.style.fontColor = fontColor;
+
+      switch (fontStyle) {
+        case 'normal':
+          textField.style.fontStyle = 'normal';
+          break;
+        case 'italic':
+          textField.style.fontStyle = 'italic';
+          break;
+        case 'bold':
+          textField.style.fontStyle = 'bold';
+          break;
+        default:
+          break;
+      }
+    }
+
+
+
+
   </script>
   <ul class="flex items-center divide-x dark:text-white dark:divide-gray-700 text-gray-800 divide-gray-200">
     <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">Freightgate</h1>
   </ul>
   <input type="file" id="pdf-file-input" accept=".pdf"> </input>
-  <div id = "selector">
+  <div id="selector">
     <button id="loadPdfBtn">Load PDF</button>
     <button id="showValuesBtn">Show Values</button>
-    <button id="editFormBtn">Edit Form</button>
+    <button id="editFormBtn">Save Form</button>
   </div>
-  
-  <div id="pdf-container"  style="width: 90%; height: 90%;">
-  <canvas id = "canvas" style="width: 90%; height: 90%;"></canvas>
+
+  <div id="pdf-container" style="width: 90%; height: 90%;">
+    <canvas id="canvas" style="width: 90%; height: 90%;"></canvas>
   </div>
-  <div id = "toolbox">
+  <div id="toolbox">
     <div class="toolbox-field" draggable="true" data-field-name="Text Field">Text Field</div>
+    <div id="fontControls">
+      <label for="fontSize">Font Size:</label>
+      <input type="number" id="fontSize" value="12" min="6" max="48">
+
+      <label for="fontColor">Font Color:</label>
+      <input type="color" id="fontColor" value="#000000">
+
+      <label for="fontStyle">Font Style:</label>
+      <select id="fontStyle">
+        <option value="normal">Normal</option>
+        <option value="italic">Italic</option>
+        <option value="bold">Bold</option>
+      </select>
+    </div>
   </div>
-  <div id = "fields-container"></div>
+  <div id="fields-container"></div>
 </body>
+
 </html>
