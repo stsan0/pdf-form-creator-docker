@@ -16,11 +16,12 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.mjs';
 
     document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
-    document.getElementById("createFormBtn").addEventListener("click", createForm)
+    document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
     document.getElementById("editFormBtn").addEventListener("click", editForm)
     
     let pdfDoc = null;
     let pdfForm = null;
+    let canvas = document.getElementById('canvas');
 
     async function loadPdf() {
       const fileInput = document.getElementById('pdf-file-input');
@@ -30,18 +31,21 @@
         const data = await file.arrayBuffer();
         pdfDoc = await pdfjsLib.getDocument({ data }).promise;
         renderPdf();
-        showFieldValues();
       }
     }
 
     export async function showFieldValues(){
-     const fieldsContainer = document.getElementById('fields-container');
-     let fieldValues = extractText().then(function(fieldValues){
-     console.log(fieldValues);
-     //fieldsContainer.innerHTML = (fieldValues);
-      fieldsContainer.innerHTML = JSON.stringify(fieldValues, null, 2);
+     const fileInput = document.getElementById('pdf-file-input');
+     const file = fileInput.files[0];
+      if (file) {
+      const fieldsContainer = document.getElementById('fields-container');
+      let fieldValues = extractText().then(function(fieldValues){
+        console.log(fieldValues);
+        //fieldsContainer.innerHTML = (fieldValues);
+          fieldsContainer.innerHTML = JSON.stringify(fieldValues, null, 2);
+        }
+       );
      }
-     );
     }
 
     // get the fieldValues from a PDF form
@@ -76,7 +80,7 @@
         // Get the page object for the current page
         pdfDoc.getPage(pageNum).then(page => {
           // Create a canvas element for rendering the page
-          const canvas = document.createElement('canvas');
+          //canvas = document.getElementById('canvas');
           const context = canvas.getContext('2d');
           canvas.style.border = '1px solid #ddd';
           pdfContainer.appendChild(canvas);
@@ -90,21 +94,6 @@
           page.render({ canvasContext: context, viewport });
         });
       }
-    }
-
-    export async function createForm() {
-      if (!pdfDoc) return;
-
-      pdfForm = await pdflib.PDFDocument.create();
-      const pages = await pdfForm.copyPages(pdfDoc, Array.from({ length: pdfDoc.numPages }, (_, i) => i + 1));
-      pages.forEach(page => pdfForm.addPage(page));
-
-      const textField = pdfForm.createTextField('text-field');
-      textField.setText('Type something');
-      pdfForm.getPages()[0].getWidgets()[0].addTextField(textField);
-
-      const modifiedPdfBytes = await pdfForm.save();
-      downloadPdf(modifiedPdfBytes, 'modified.pdf');
     }
 
     export async function editForm() {
@@ -123,18 +112,67 @@
       link.download = filename;
       link.click();
     }
-    
+
+    // Add event listener for toolbox field drag start
+    const toolboxFields = document.querySelectorAll('.toolbox-field');
+    toolboxFields.forEach(toolboxField => {
+        toolboxField.addEventListener('dragstart', function (event) {
+            event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
+        });
+    });    
+
+    // Add event listener for canvas drop
+    canvas.addEventListener('drop', function (event) {
+        event.preventDefault();
+        const fieldName = event.dataTransfer.getData('text/plain');
+        const offsetX = event.clientX - canvas.getBoundingClientRect().left;
+        const offsetY = event.clientY - canvas.getBoundingClientRect().top;
+
+        const editableField = createEditableField(offsetX, offsetY, fieldName);
+                    canvas.appendChild(editableField);
+     });
+
+     // Prevent default behavior to allow drop
+    canvas.addEventListener('dragover', function (event) {
+                    event.preventDefault();
+     });
+
+    // Create editable field
+    function createEditableField(left, top, initialValue) {        
+        const field = document.createElement('div');
+        field.className = 'editable-field';
+        field.style.left = left + 'px';
+        field.style.top = top + 'px';
+        field.innerText = initialValue;
+
+        // Add event listener to capture changes to the name
+        field.addEventListener('click', function () {
+            const newName = prompt('Enter a new name:', field.innerText);
+            if (newName !== null) {
+                field.innerText = newName;
+                console.log('Updated name:', newName);
+                  // You can send this newName to the server for further processing
+            }
+        })
+        return field;
+    }          
   </script>
   <ul class="flex items-center divide-x dark:text-white dark:divide-gray-700 text-gray-800 divide-gray-200">
     <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">Freightgate</h1>
   </ul>
   <input type="file" id="pdf-file-input" accept=".pdf"> </input>
-  <div id = "selector" class="absolute xl:static  bottom-0 narrow:h-full vkeyboard:h-full md:h-full xl:border-r-2 xl:border-gray-100 xl:border-solid xl:dark:border-gray-1000 xl:dark:border-r z-10  h-[65%] translate-x-0">
+  <div id = "selector">
     <button id="loadPdfBtn">Load PDF</button>
-    <button id="createFormBtn">Create Form</button>
+    <button id="showValuesBtn">Show Values</button>
     <button id="editFormBtn">Edit Form</button>
   </div>
-  <div id="pdf-container" class="flex flex-1 justify-center w-full bg-gray-100 h-full dark:bg-gray-950 overflow-hidden"></div>
+  
+  <div id="pdf-container"  style="width: 90%; height: 90%;">
+  <canvas id = "canvas" style="width: 90%; height: 90%;"></canvas>
+  </div>
+  <div id = "toolbox">
+    <div class="toolbox-field" draggable="true" data-field-name="Text Field">Text Field</div>
+  </div>
   <div id = "fields-container"></div>
 </body>
 </html>
