@@ -1,22 +1,23 @@
-import { degrees, PDFDocument, rgb, StandardFonts } from './pdf-lib/dist/pdf-lib.js';
+//import { PDFDocument } from './pdf-lib/dist/pdf-lib.js';
+//SyntaxError: Requested module does not provide an export named 'PDFDocument' 
+//import { PDFDocument } from 'pdf-lib';
+import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
 
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
 document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
 document.getElementById("editFormBtn").addEventListener("click", editForm)
 
 let pdfDoc = null;
-let page;
 let canvas = document.getElementById('canvas');
 let lastDrag = null;
 
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
-
     if (file) {
         const data = await file.arrayBuffer();
         //pdfDoc = await pdfjsLib.getDocument({ data }).promise;
-        pdfDoc = await PDFDocument.load(data).promise;
+        pdfDoc = await PDFDocument.load(data);
         renderPdf();
     }
 }
@@ -54,36 +55,39 @@ export function renderPdf() {
     const form = pdfDoc.getForm();
     // Loop through each page of the PDF document
     for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-        // Get the page object for the current page
         pdfDoc.getPage(pageNum).then(page => {
-            // Create a canvas element for rendering the page
-            //canvas = document.getElementById('canvas');
-            const context = canvas.getContext('2d');
-            canvas.style.border = '1px solid #ddd';
-            pdfContainer.appendChild(canvas);
+            // Separate fields from the Doc, then display the Doc
+            const fields = form.getFields();
+            // Loop through each field of the PDF form
 
-            // Get the viewport for the current page
-            const viewport = page.getViewport({ scale: 1.5 });
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            const fields = form.getFields()
             fields.forEach(field => {
                 const type = field.constructor.name
                 const name = field.getName()
+                const inner = field.getValue()
                 const widgets = field.acroField.getWidgets();
                 //widgets.forEach((w) => {
                 //    const rect = w.getRectangle(); //{ x, y, width, height }
                 //});
                 const rect = widgets[0].getRectangle(); //{ x, y, width, height }
 
-                createEditableField(rect.x, rect.y, type, name).then(function (editableField) {
+                createEditableField(rect.x, rect.y, type, name, inner).then(function (editableField) {
                     canvas.after(editableField);
                 });
-            })
-
-            // Render the page onto the canvas
-            page.render({ canvasContext: context, viewport });
+            }
+            );
+            // Render the page!
+            const canvas = document.createElement('canvas');
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale: scale });
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            const renderContext = {
+                canvasContext: context,
+                viewport: viewport
+            };
+            page.render(renderContext);
+            pdfContainer.appendChild(canvas);
         });
     }
 }
@@ -103,10 +107,17 @@ export async function editForm() {
         const width = target.width;
         const height = target.height;
         for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-            // Get the page object for the current page
-            pdfDoc.getPage(pageNum).then(page => {
-                pdfDoc.drawText(fieldName, { x, y, width, height });
-            });
+            const page = pdfDoc.getPage(pageNum);
+            // Remove the previous form field/value (if any)
+            const field = page.getTextField(fieldName);
+            if (field) {
+                field.removeFromPage();
+            }
+            // Change the formfield's value and appearance
+            field = page.createTextField(fieldName);
+            field.setText(editableField.innerText);
+            field.addToPage(page, { x, y, width, height });
+
             //field.updateAppearances();
             //editableField.remove();
         }
@@ -172,7 +183,7 @@ async function createEditableField(left, top, initialValue, inner) {
     field.className = 'editable-field';
     field.style.left = left + 'px';
     field.style.top = top + 'px';
-    if (inner) {
+    if (inner != '') {
         field.innerText = inner;
     } else {
         field.innerText = 'undefined';
