@@ -19,9 +19,9 @@
     <button id="showValuesBtn">Show Values</button>
     <button id="editFormBtn">Save Form</button>
   </div>
-
-  <div id="pdf-container" style="width: 90%; height: 90%;">
-    <canvas id="canvas" style="width: 90%; height: 90%;"></canvas>
+  <div id="pdf-container">
+    <div id="canvas" ></div>
+    <iframe id="iframe"> </iframe>
   </div>
   <div id="toolbox">
     <div class="toolbox-field" draggable="true" data-field-name="Text Field">Text Field</div>
@@ -56,22 +56,22 @@
     </div>
   </div>
   <div id="fields-container"></div>
-  <!-- The Modal -->
-  <div id="myModal" class="modal">
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
 
-    <!-- Modal content -->
-
-    <div class="modal-content">
-      <span class="close">&times;</span>
-      <div class="modal-title"></div>
-      <div class="modal-body">Some text in the Modal..</div>
-      <button class="modal-cancel">Cancel</button>
-      <button class="modal-ok">OK</button>
-
-      <div style="clear: both;"></div>
+      <!-- Modal content -->
+  
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="modal-title"></div>
+        <div class="modal-body">Some text in the Modal..</div>
+        <button class="modal-cancel">Cancel</button>
+        <button class="modal-ok">OK</button>
+  
+        <div style="clear: both;"></div>
+      </div>
+  
     </div>
-
-  </div>
   <script type="text/javascript">
     var efb = null;
     // modal logic

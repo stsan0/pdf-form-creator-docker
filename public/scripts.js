@@ -1,8 +1,4 @@
-//import { PDFDocument } from './pdf-lib/dist/pdf-lib.js';
-//SyntaxError: Requested module does not provide an export named 'PDFDocument' 
-//import { PDFDocument } from 'pdf-lib';
 import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
-
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
 document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
 document.getElementById("editFormBtn").addEventListener("click", editForm)
@@ -14,15 +10,20 @@ let lastDrag = null;
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
+    // Add an iframe inside pdf-container for PDF to render onto, under canvas as a layer below
+    const iframe = document.getElementById('iframe');
+    
     if (file) {
         const data = await file.arrayBuffer();
-        //pdfDoc = await pdfjsLib.getDocument({ data }).promise;
         pdfDoc = await PDFDocument.load(data);
+        const pdfBytes = await pdfDoc.save();
+        const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+        iframe.src = (pdfDataUri + "#toolbar=0");
         renderPdf();
     }
 }
 
-export async function showFieldValues() {
+async function showFieldValues() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
     if (file) {
@@ -50,52 +51,36 @@ async function extractText() {
     return result;
 }
 
-export function renderPdf() {
-    const pdfContainer = document.getElementById('pdf-container');
+function renderPdf() {
+    const canvas = document.getElementById('canvas');
+    
+    // add editable-fields on top of pdf
     const form = pdfDoc.getForm();
-    // Loop through each page of the PDF document
-    for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-        pdfDoc.getPage(pageNum).then(page => {
-            // Separate fields from the Doc, then display the Doc
-            const fields = form.getFields();
-            // Loop through each field of the PDF form
-
-            fields.forEach(field => {
-                const type = field.constructor.name
-                const name = field.getName()
-                const inner = field.getValue()
-                const widgets = field.acroField.getWidgets();
-                //widgets.forEach((w) => {
-                //    const rect = w.getRectangle(); //{ x, y, width, height }
-                //});
-                const rect = widgets[0].getRectangle(); //{ x, y, width, height }
-
-                createEditableField(rect.x, rect.y, type, name, inner).then(function (editableField) {
-                    canvas.after(editableField);
-                });
-            }
-            );
-            // Render the page!
-            const canvas = document.createElement('canvas');
-            const scale = 1.5;
-            const viewport = page.getViewport({ scale: scale });
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            const renderContext = {
-                canvasContext: context,
-                viewport: viewport
-            };
-            page.render(renderContext);
-            pdfContainer.appendChild(canvas);
-        });
+    const fields = form.getFields();
+    fields.forEach(field => {
+        // if textfield then create editable-field
+        if  (field.constructor.name == "PDFTextField2") 
+        {
+            const type = field.constructor.name
+            const name = field.getName()
+            const textField = form.getTextField(name)
+            const inner = textField.getText()
+            const widgets = field.acroField.getWidgets();
+            //widgets.forEach((w) => {
+            //    const rect = w.getRectangle(); //{ x, y, width, height }
+            //});
+            const rect = widgets[0].getRectangle(); //{ x, y, width, height }
+            //console.log( "renderPdf: " + rect.x + " " + rect.y + " " + type + " " + name + " " + inner)
+            createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height).then(function (editableField) {
+                canvas.append(editableField);
+            });
     }
-}
+    });
+    }
 
-export async function editForm() {
+async function editForm() {
     if (!pdfDoc) return;
     // add editable-fields on top of pdf
-    const fieldsContainer = document.getElementById('fields-container');
     const editableFields = document.querySelectorAll('.editable-field');
     editableFields.forEach(editableField => {
         const fieldName = editableField.innerText;
@@ -128,7 +113,7 @@ export async function editForm() {
     downloadPdf(modifiedPdfBytes, 'modified.pdf');
 }
 
-export function downloadPdf(data, filename) {
+function downloadPdf(data, filename) {
     const blob = new Blob([data], { type: 'application/pdf' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
@@ -166,8 +151,8 @@ canvas.addEventListener('drop', function (event) {
         lastDrag.style.left = offsetX + 'px';
         lastDrag.style.top = offsetY + 'px';
     } else {
-        const editableField = createEditableField(offsetX, offsetY, fieldName, 'undefined').then(function (editableField) {
-            canvas.after(editableField);
+        const editableField = createEditableField(offsetX, offsetY, fieldName, '').then(function (editableField) {
+            canvas.appendChild(editableField);
         });
     }
 });
@@ -178,16 +163,21 @@ canvas.addEventListener('dragover', function (event) {
 });
 
 // Create editable field
-async function createEditableField(left, top, initialValue, inner) {
+async function createEditableField(left, top, className, inner, width, height) {
+    const pdfContainer = document.getElementById('pdf-container');
     const field = document.createElement('div');
-    field.className = 'editable-field';
-    field.style.left = left + 'px';
-    field.style.top = top + 'px';
-    if (inner != '') {
-        field.innerText = inner;
+    if (className){
+    field.className = className;
     } else {
-        field.innerText = 'undefined';
+    field.className = 'editable-field';
     }
+    field.style.position = 'absolute';
+    // left + offset to account for the pdf-container's left offset
+    field.style.left = canvas.getBoundingClientRect().left + left + 'px';
+    field.style.bottom = canvas.getBoundingClientRect().top + top  + 'px';
+    field.style.width = width + 'px';
+    field.style.height = height + 'px'; 
+    field.innerText = inner;
     field.draggable = true;
     field.style.width = '100px';
     // use the html font size, font color, font style values to update the editable-field's font properties

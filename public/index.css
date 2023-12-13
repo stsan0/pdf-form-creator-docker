@@ -75,3 +75,39 @@ li a {
 #fontControls{
   margin-top:10px;
 }
+
+#pdf-container{
+  /*pdfcontainer that shows 100% of contents*/
+  width: 50%;
+  height: 100%;
+  margin: auto;
+  border: 1px solid #ccc;
+  overflow: scroll;
+  position: relative;
+  z-index: 0;
+  background-color: #fff;
+  pointer-events: none;
+  /*make pdfcontainer a display below canvas*/
+  position: absolute;
+}
+
+#canvas {
+  /*make canvas above iframe*/
+  position: absolute;
+  z-index: 1;
+  /*make canvas same size as iframe*/
+  width: 100%;
+  height: 100%;
+  /*make canvas transparent*/
+  background-color: transparent;
+}
+
+#iframe {
+ /*make iframe a display below canvas*/
+  position: relative;
+  z-index: 0;
+  /*make iframe same size as canvas*/
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
