@@ -5,6 +5,7 @@ document.getElementById("editFormBtn").addEventListener("click", editForm)
 
 let pdfDoc = null;
 let canvas = document.getElementById('canvas');
+let pdfContainer = document.getElementById('pdf-container');
 let lastDrag = null;
 
 async function loadPdf() {
@@ -12,7 +13,7 @@ async function loadPdf() {
     const file = fileInput.files[0];
     // Add an iframe inside pdf-container for PDF to render onto, under canvas as a layer below
     const iframe = document.getElementById('iframe');
-    
+
     if (file) {
         const data = await file.arrayBuffer();
         pdfDoc = await PDFDocument.load(data);
@@ -53,14 +54,13 @@ async function extractText() {
 
 function renderPdf() {
     const canvas = document.getElementById('canvas');
-    
+
     // add editable-fields on top of pdf
     const form = pdfDoc.getForm();
     const fields = form.getFields();
     fields.forEach(field => {
         // if textfield then create editable-field
-        if  (field.constructor.name == "PDFTextField2") 
-        {
+        if (field.constructor.name == "PDFTextField2") {
             const type = field.constructor.name
             const name = field.getName()
             const textField = form.getTextField(name)
@@ -74,9 +74,9 @@ function renderPdf() {
             createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height).then(function (editableField) {
                 canvas.append(editableField);
             });
-    }
+        }
     });
-    }
+}
 
 async function editForm() {
     if (!pdfDoc) return;
@@ -84,7 +84,7 @@ async function editForm() {
     const editableFields = document.querySelectorAll('.editable-field');
     editableFields.forEach(editableField => {
         const fieldName = editableField.innerText;
-        //const field = pdfDoc.getField(fieldName);
+
         const target = editableField.getBoundingClientRect();
         //const { x, y, width, height } = {target.x, target.y, target.width, target.height};
         const x = target.x;
@@ -92,17 +92,14 @@ async function editForm() {
         const width = target.width;
         const height = target.height;
         for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-            const page = pdfDoc.getPage(pageNum);
-            // Remove the previous form field/value (if any)
-            const field = page.getTextField(fieldName);
-            if (field) {
-                field.removeFromPage();
-            }
-            // Change the formfield's value and appearance
-            field = page.createTextField(fieldName);
-            field.setText(editableField.innerText);
-            field.addToPage(page, { x, y, width, height });
-
+            // Get the page object for the current page
+            pdfDoc.getPage(pageNum).then(page => {
+                const field = page.getTextField(fieldName);
+                if (field) {
+                    field.removeFromPage();
+                }
+                pdfDoc.drawTextField(/*fieldName,*/{ x, y, width, height });
+            });
             //field.updateAppearances();
             //editableField.remove();
         }
@@ -152,7 +149,7 @@ canvas.addEventListener('drop', function (event) {
         lastDrag.style.top = offsetY + 'px';
     } else {
         const editableField = createEditableField(offsetX, offsetY, fieldName, '').then(function (editableField) {
-            canvas.appendChild(editableField);
+            canvas.after(editableField);
         });
     }
 });
@@ -161,23 +158,28 @@ canvas.addEventListener('drop', function (event) {
 canvas.addEventListener('dragover', function (event) {
     event.preventDefault();
 });
+let dragging = false;
+document.onmousemove = function (e) {
+    if (!dragging) return;
+}
 
 // Create editable field
-async function createEditableField(left, top, className, inner, width, height) {
-    const pdfContainer = document.getElementById('pdf-container');
+async function createEditableField(x, y, className, inner, width, height) {
     const field = document.createElement('div');
-    if (className){
-    field.className = className;
+    const fieldText = document.createElement('div');
+    if (className) {
+        field.className = className;
     } else {
-    field.className = 'editable-field';
+        field.className = 'editable-field';
     }
-    field.style.position = 'absolute';
+    field.style.position = 'fixed';
     // left + offset to account for the pdf-container's left offset
-    field.style.left = canvas.getBoundingClientRect().left + left + 'px';
-    field.style.bottom = canvas.getBoundingClientRect().top + top  + 'px';
+    field.style.left = iframe.getBoundingClientRect().left + x + 'px';
+    field.style.bottom = iframe.getBoundingClientRect().bottom + y + 'px';
     field.style.width = width + 'px';
-    field.style.height = height + 'px'; 
-    field.innerText = inner;
+    field.style.height = height + 'px';
+    fieldText.innerText = inner;
+    fieldText.className = 'editable-field-box';
     field.draggable = true;
     field.style.width = '100px';
     // use the html font size, font color, font style values to update the editable-field's font properties
@@ -185,7 +187,8 @@ async function createEditableField(left, top, className, inner, width, height) {
     const fontColor = document.getElementById('fontColor').value;
     const fontStyle = document.getElementById('fontStyle').value;
     const fontFamily = document.getElementById('fontFamily').value;
-    updateTextFieldFontProperties(field, fontSize, fontColor, fontStyle, fontFamily);
+    updateTextFieldFontProperties(fieldText, fontSize, fontColor, fontStyle, fontFamily);
+    field.appendChild(fieldText);
 
     // Add event listener to capture changes to the name
     field.addEventListener('click', function (event) {
@@ -213,9 +216,28 @@ async function createEditableField(left, top, className, inner, width, height) {
         //startX = event.clientX - target.x;
         //startY = event.clientY - target.y;
         //event.target.remove();
-
+        dragging = true;
         lastDrag = event.target;
     });
+
+    const tag = document.createElement('span');
+    tag.className = "font-control fa fa-edit";
+    tag.innerHTML = "";
+
+    tag.addEventListener('click', function (e) {
+        efb = e.target.parentElement.querySelector('.editable-field-box');
+        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
+        let mmodal = document.querySelector('.modal-body');
+        mmodal.querySelector('#fontSize').value = efb.style.fontSize.replace('px', '');
+        //console.log(efb.style.fontFamily);
+        mmodal.querySelector('#fontColor').value = RGBToHex(efb.style.color);
+        mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
+        mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
+        mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
+
+    });
+
+    field.appendChild(tag);
     return field;
 }
 
