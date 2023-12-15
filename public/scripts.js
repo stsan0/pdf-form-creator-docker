@@ -5,7 +5,6 @@ document.getElementById("editFormBtn").addEventListener("click", editForm)
 
 let pdfDoc = null;
 let canvas = document.getElementById('canvas');
-let pdfContainer = document.getElementById('pdf-container');
 let lastDrag = null;
 
 async function loadPdf() {
@@ -53,145 +52,64 @@ async function extractText() {
 }
 
 function renderPdf() {
-    const canvas = document.getElementById('canvas');
-
-    // add editable-fields on top of pdf
+    const pdfContainer = document.getElementById('pdf-container');
+    // TODO: CORRECT THE OFFSET
     const form = pdfDoc.getForm();
     const fields = form.getFields();
     fields.forEach(field => {
         // if textfield then create editable-field
         if (field.constructor.name == "PDFTextField2") {
-            const type = field.constructor.name
+            //const type = field.constructor.name
             const name = field.getName()
             const textField = form.getTextField(name)
             const inner = textField.getText()
             const widgets = field.acroField.getWidgets();
             //widgets.forEach((w) => {
-            //    const rect = w.getRectangle(); //{ x, y, width, height }
+            //    const rect = w.getRectangle(); //{ x, y, width, height } This takes all four points that make up the rectangle.
             //});
-            const rect = widgets[0].getRectangle(); //{ x, y, width, height }
+            const rect = widgets[0].getRectangle(); //{ x, y, width, height } We're just using the top left corner.
             //console.log( "renderPdf: " + rect.x + " " + rect.y + " " + type + " " + name + " " + inner)
-            createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height).then(function (editableField) {
-                canvas.append(editableField);
+            const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height).then(function (editableField) {
+                canvas.appendChild(editableField);
             });
         }
     });
-}
-
-async function editForm() {
-    if (!pdfDoc) return;
-    // add editable-fields on top of pdf
-    const editableFields = document.querySelectorAll('.editable-field');
-    editableFields.forEach(editableField => {
-        const fieldName = editableField.innerText;
-
-        const target = editableField.getBoundingClientRect();
-        //const { x, y, width, height } = {target.x, target.y, target.width, target.height};
-        const x = target.x;
-        const y = target.y;
-        const width = target.width;
-        const height = target.height;
-        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-            // Get the page object for the current page
-            pdfDoc.getPage(pageNum).then(page => {
-                const field = page.getTextField(fieldName);
-                if (field) {
-                    field.removeFromPage();
-                }
-                pdfDoc.drawTextField(/*fieldName,*/{ x, y, width, height });
-            });
-            //field.updateAppearances();
-            //editableField.remove();
-        }
-    });
-
-    // save to pdf
-    const modifiedPdfBytes = await pdfDoc.save();
-    downloadPdf(modifiedPdfBytes, 'modified.pdf');
-}
-
-function downloadPdf(data, filename) {
-    const blob = new Blob([data], { type: 'application/pdf' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-}
-let startX = null;
-let startY = null;
-
-// Add event listener for toolbox field drag start
-const toolboxFields = document.querySelectorAll('.toolbox-field');
-toolboxFields.forEach(toolboxField => {
-    toolboxField.addEventListener('dragstart', function (event) {
-        const target = event.target.getBoundingClientRect();
-        lastDrag = event.target;
-        startX = event.clientX - target.x;
-        startY = event.clientY - target.y;
-
-        if (event.target.className == 'editable-field') {
-
-            event.target.remove();
-        }
-        event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
-    });
-});
-
-// Add event listener for canvas drop
-canvas.addEventListener('drop', function (event) {
-    event.preventDefault();
-    const fieldName = event.dataTransfer.getData('text/plain');
-    const offsetX = event.clientX - startX; //- canvas.getBoundingClientRect().left;
-    const offsetY = event.clientY - startY; //- canvas.getBoundingClientRect().top;
-
-    if (lastDrag.className == 'editable-field') {
-        lastDrag.style.left = offsetX + 'px';
-        lastDrag.style.top = offsetY + 'px';
-    } else {
-        const editableField = createEditableField(offsetX, offsetY, fieldName, '').then(function (editableField) {
-            canvas.after(editableField);
-        });
-    }
-});
-
-// Prevent default behavior to allow drop
-canvas.addEventListener('dragover', function (event) {
-    event.preventDefault();
-});
-let dragging = false;
-document.onmousemove = function (e) {
-    if (!dragging) return;
 }
 
 // Create editable field
 async function createEditableField(x, y, className, inner, width, height) {
-    const field = document.createElement('div');
     const fieldText = document.createElement('div');
-    if (className) {
-        field.className = className;
-    } else {
-        field.className = 'editable-field';
-    }
-    field.style.position = 'fixed';
-    // left + offset to account for the pdf-container's left offset
-    field.style.left = iframe.getBoundingClientRect().left + x + 'px';
-    field.style.bottom = iframe.getBoundingClientRect().bottom + y + 'px';
-    field.style.width = width + 'px';
-    field.style.height = height + 'px';
+    // offset the field by the x and y values of the iframe to get the correct position
+    fieldText.style.left = x - iframe.getBoundingClientRect().left + 'px';
+    fieldText.style.bottom = y - iframe.getBoundingClientRect().top + 150 + 'px';
+
+    //field.style.width = width + 'px';
+    //field.style.height = height + 'px';
+    //if (inner = 'undefined') {
+    //    inner = ' ';
+    //}
     fieldText.innerText = inner;
-    fieldText.className = 'editable-field-box';
-    field.draggable = true;
-    field.style.width = '100px';
+    // change div id to name
+    if (className == 'editable-field' || !className) {
+        fieldText.id = prompt("Prior name is " + className + ". Please enter a name for the field", console.log(fieldText.id));
+    } else {
+
+        fieldText.id = className;
+    }
+    fieldText.style.width = width + 'px';
+    fieldText.style.height = height + 'px';
+    fieldText.draggable = true;
     // use the html font size, font color, font style values to update the editable-field's font properties
     const fontSize = document.getElementById('fontSize').value;
     const fontColor = document.getElementById('fontColor').value;
     const fontStyle = document.getElementById('fontStyle').value;
     const fontFamily = document.getElementById('fontFamily').value;
-    updateTextFieldFontProperties(fieldText, fontSize, fontColor, fontStyle, fontFamily);
-    field.appendChild(fieldText);
+    const fontWeight = document.getElementById('fontWeight').value;
+    updateTextFieldFontProperties(fieldText, fontSize, fontColor, fontStyle, fontFamily, fontWeight);
+    //field.appendChild(fieldText);
 
     // Add event listener to capture changes to the name
-    field.addEventListener('click', function (event) {
+    fieldText.addEventListener('click', function (event) {
         let o = '100px';
         if (event.target.hasAttribute('data-width')) {
             o = event.target.getAttribute('data-width');
@@ -211,7 +129,7 @@ async function createEditableField(x, y, className, inner, width, height) {
             // You can send this newName to the server for further processing
         }
     })
-    field.addEventListener('dragstart', function (event) {
+    fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();
         //startX = event.clientX - target.x;
         //startY = event.clientY - target.y;
@@ -237,20 +155,106 @@ async function createEditableField(x, y, className, inner, width, height) {
 
     });
 
-    field.appendChild(tag);
-    return field;
+    fieldText.appendChild(tag);
+    return fieldText;
 }
 
 // Function to update the text field with user-defined font properties
-function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle, fontFamily) {
+function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle, fontFamily, fontWeight) {
     // get the text field from the toolbox and update its font properties
     console.log("updateTextFieldFontProperties: " + fontSize + " " + fontColor + " " + fontStyle + " " + fontFamily)
     textField.style.fontSize = (fontSize + "px");
     textField.style.color = fontColor;
     textField.style.fontFamily = fontFamily;
     textField.style.fontStyle = fontStyle;
+    textField.style.fontWeight = fontWeight;
 }
 
+async function editForm() {
+    if (!pdfDoc) return;
+    // add editable-fields on top of pdf
+    const editableFields = document.querySelectorAll('.editable-field');
+    editableFields.forEach(editableField => {
+        const fieldName = editableField.innerText;
 
+        const target = editableField.getBoundingClientRect();
+        //const { x, y, width, height } = {target.x, target.y, target.width, target.height};
+        const x = target.x;
+        const y = target.y;
+        const width = target.width;
+        const height = target.height;
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+            // Get the page object for the current page
+            pdfDoc.getPage(pageNum).then(page => {
+                const field = page.getTextField(fieldName);
+                if (field) {
+                    field.removeFromPage();
+                }
+                pdfDoc.drawTextField(/*fieldName,*/{ x, y, width, height });
+            });
+        }
+    });
 
+    // save to pdf
+    const modifiedPdfBytes = await pdfDoc.save();
+    downloadPdf(modifiedPdfBytes, 'modified.pdf');
+}
+
+function downloadPdf(data, filename) {
+    const blob = new Blob([data], { type: 'application/pdf' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+}
+let startX = null;
+let startY = null;
+// Add event listener for toolbox field drag start
+const toolboxFields = document.querySelectorAll('.toolbox-field');
+toolboxFields.forEach(toolboxField => {
+    toolboxField.addEventListener('dragstart', function (event) {
+        const target = event.target.getBoundingClientRect();
+        lastDrag = event.target;
+        startX = event.clientX - target.x;
+        startY = event.clientY - target.y;
+
+        if (event.target.parentElement == 'canvas') {
+
+            event.target.remove();
+        }
+        event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
+    });
+});
+
+// Add event listener for canvas drop
+canvas.addEventListener('drop', function (event) {
+    event.preventDefault();
+    let className = lastDrag.id;
+    console.log("draggin' : " + className)
+    if (className == ' ' || !className) {// get the id  of the element being dragged
+        className = lastDrag.id;
+        console.log("canvas drop: " + className);
+
+    }
+    const offsetX = event.clientX - startX; //- canvas.getBoundingClientRect().left;
+    const offsetY = event.clientY - startY; //- canvas.getBoundingClientRect().top;
+    const fieldName = lastDrag.text
+    if (lastDrag.parentElement == 'canvas') {
+        lastDrag.style.left = offsetX + 'px';
+        lastDrag.style.top = offsetY + 'px';
+    } else {
+        const editableField = createEditableField(offsetX, offsetY, className, fieldName, '100px', '100px').then(function (editableField) {
+            canvas.appendChild(editableField);
+        });
+    }
+});
+
+// Prevent default behavior to allow drop
+canvas.addEventListener('dragover', function (event) {
+    event.preventDefault();
+});
+let dragging = false;
+document.onmousemove = function (e) {
+    if (!dragging) return;
+}
 

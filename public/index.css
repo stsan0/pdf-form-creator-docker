@@ -20,29 +20,35 @@ li a {
 }
 #selector
 {
-  list-style-type: none;
-  margin: 0;
-  padding: 0;
-  width: 200px;
-  background-color: #f1f1f1;
-  display: block;
-  color: #000;
-  padding: 8px 16px;
-  text-decoration: none;
-  background-color: #555;
-  color: white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 25%;
+  background: #eee;
+  margin-top: 100px;
+  padding: 10px;
+  border: 1px solid #ccc;
+  display: inline-block;
 
 }
 
 #pdf-container {
-      width: 50%;
-      height: 100%;
-      border: 1px solid #ccc;
-
+ /*pdfcontainer that shows 100% of contents*/
+  width: 90%;
+  height: 90%;
+  margin: auto;
+  border: 1px solid #ccc;
+  overflow: scroll;
+  position: relative;
+  z-index: -50;
+  background-color: #fff;
+  /*make pdfcontainer a display below canvas*/
+  position: absolute;
     }
 
-.editable-field {
-  position: absolute;
+#canvas > * {
+  position: fixed;
   border: 1px solid #000;
   padding: 5px;
   background-color: #fff;
@@ -68,26 +74,10 @@ li a {
   height: 12px;
   border: 1px solid #ccc;
   background: #eee;
-
-
  }
 
 #fontControls{
   margin-top:10px;
-}
-
-#pdf-container{
-  /*pdfcontainer that shows 100% of contents*/
-  width: 100%;
-  height: 100%;
-  margin: auto;
-  border: 1px solid #ccc;
-  overflow: scroll;
-  position: relative;
-  z-index: 0;
-  background-color: #fff;
-  /*make pdfcontainer a display below canvas*/
-  position: absolute;
 }
 
 #canvas {
@@ -99,14 +89,12 @@ li a {
   /*make canvas same size as iframe*/
   width: 100%;
   height: 100%;
-  /*make canvas transparent*/
-  background-color: transparent;
 }
 
 #iframe {
  /*make iframe a display below canvas*/
   position: absolute;
-  z-index: 0;
+  z-index: -1;
   left: 0;
   top: 0;
   /*make iframe same size as canvas*/

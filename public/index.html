@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Form Creator and Editor</title>
   <link rel="stylesheet" href="index.css">
+  <link rel="stylesheet" href="/fa/css/font-awesome.min.css">
 </head>
 
 <body>
@@ -13,8 +14,8 @@
   <ul class="flex items-center divide-x dark:text-white dark:divide-gray-700 text-gray-800 divide-gray-200">
     <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">Freightgate</h1>
   </ul>
-  <input type="file" id="pdf-file-input" accept=".pdf"> </input>
   <div id="selector">
+    <input type="file" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn">Load PDF</button>
     <button id="showValuesBtn">Show Values</button>
     <button id="editFormBtn">Save Form</button>
@@ -24,7 +25,7 @@
     <iframe id="iframe"> </iframe>
   </div>
   <div id="toolbox">
-    <div class="toolbox-field" draggable="true" data-field-name="Text Field">Text Field</div>
+    <div class="toolbox-field" draggable="true" data-field-name="editable-field">Text Field</div>
     <div id="fontControls">
       <label for="fontSize">Font Size:</label>
       <input type="number" id="fontSize" value="12" min="6" max="48">
