@@ -1,4 +1,5 @@
 import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
+import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
 document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
 document.getElementById("editFormBtn").addEventListener("click", editForm)
@@ -6,19 +7,54 @@ document.getElementById("editFormBtn").addEventListener("click", editForm)
 let pdfDoc = null;
 let canvas = document.getElementById('canvas');
 let lastDrag = null;
+pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.mjs';
 
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
     // Add an iframe inside pdf-container for PDF to render onto, under canvas as a layer below
-    const iframe = document.getElementById('iframe');
+    const iframe = document.getElementById('pdfframe');
 
     if (file) {
         const data = await file.arrayBuffer();
         pdfDoc = await PDFDocument.load(data);
-        const pdfBytes = await pdfDoc.save();
+        const loadingTask = pdfjs_viewer.getDocument(data);
+        loadingTask.promise.then(function (pdf) {
+            console.log('PDF loaded');
+
+            // Fetch the first page
+            var pageNumber = 1;
+            pdf.getPage(pageNumber).then(function (page) {
+                console.log('Page loaded');
+
+                var scale = 1.5;
+                var viewport = page.getViewport({ scale: scale });
+
+                // Prepare canvas using PDF page dimensions
+                var canvas = document.getElementById('pdfframe');
+                var context = canvas.getContext('2d');
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                // Render PDF page into canvas context
+                var renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                var renderTask = page.render(renderContext);
+                renderTask.promise.then(function () {
+                    console.log('Page rendered');
+                });
+            });
+        }, function (reason) {
+            // PDF loading error
+            console.error(reason);
+        });
+        /*const pdfBytes = await pdfDoc.save();
         const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
+        
         iframe.src = (pdfDataUri + "#toolbar=0");
+        */
         renderPdf();
     }
 }
@@ -42,8 +78,9 @@ async function extractText() {
     const form = pdfDoc.getForm()
     const fields = form.getFields()
     fields.forEach(field => {
-        const type = field.constructor.name
-        const name = field.getName()
+        const constructor = field.getName()
+        const type = form.getTextfield(constructor)
+        const name = type.getText()
         result[type] = name;
     })
     //console.log(result + " has the entries of " + Object.entries(result)); 
@@ -52,10 +89,13 @@ async function extractText() {
 }
 
 function renderPdf() {
-    const pdfContainer = document.getElementById('pdf-container');
     // TODO: CORRECT THE OFFSET
     const form = pdfDoc.getForm();
     const fields = form.getFields();
+    // make  canvas the same size as the pdfframe
+    canvas.width = pdfframe.width;
+    canvas.height = pdfframe.height;
+    // add editable-fields on top of pdf
     fields.forEach(field => {
         // if textfield then create editable-field
         if (field.constructor.name == "PDFTextField2") {
@@ -80,8 +120,8 @@ function renderPdf() {
 async function createEditableField(x, y, className, inner, width, height) {
     const fieldText = document.createElement('div');
     // offset the field by the x and y values of the iframe to get the correct position
-    fieldText.style.left = x - iframe.getBoundingClientRect().left + 'px';
-    fieldText.style.bottom = y - iframe.getBoundingClientRect().top + 150 + 'px';
+    fieldText.style.left = x + 'px';
+    fieldText.style.bottom = y + 'px';
 
     //field.style.width = width + 'px';
     //field.style.height = height + 'px';
