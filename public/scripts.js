@@ -31,10 +31,10 @@ async function loadPdf() {
                 var viewport = page.getViewport({ scale: scale });
 
                 // Prepare canvas using PDF page dimensions
-                var canvas = document.getElementById('pdfframe');
-                var context = canvas.getContext('2d');
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+                var pdfframe = document.getElementById('pdfframe');
+                var context = pdfframe.getContext('2d');
+                pdfframe.height = viewport.height;
+                pdfframe.width = viewport.width;
 
                 // Render PDF page into canvas context
                 var renderContext = {
@@ -89,6 +89,7 @@ async function extractText() {
 }
 
 function renderPdf() {
+    const pdfContainer = document.getElementById('pdf-container');
     // TODO: CORRECT THE OFFSET
     const form = pdfDoc.getForm();
     const fields = form.getFields();
@@ -151,7 +152,7 @@ async function createEditableField(x, y, className, inner, width, height) {
     else {
         fieldText.style.width = width;
     }
-    if (!height.includes('px') != true) {
+    if (height.includes('px') != true) {
         height = height + 'px';
         fieldText.style.height = height;
     }
@@ -238,10 +239,10 @@ async function editForm() {
     // add editable-fields on top of pdf
     const editableFields = document.querySelectorAll('.editable-field');
     editableFields.forEach(editableField => {
-        const fieldName = editableField.innerText;
-
-        const target = editableField.getBoundingClientRect();
-        //const { x, y, width, height } = {target.x, target.y, target.width, target.height};
+        const fieldName = editableField.id;
+        console.log("changing: " + fieldName)
+        const target = editableField;
+        // { x, y, width, height } 
         const x = target.x;
         const y = target.y;
         const width = target.width;
@@ -253,7 +254,16 @@ async function editForm() {
                 if (field) {
                     field.removeFromPage();
                 }
-                pdfDoc.drawTextField(/*fieldName,*/{ x, y, width, height });
+                // use pdf-lib TextPosition to set the position of the editable-field
+                const textPosition = {
+                    x: x,
+                    y: y,
+                    width: width,
+                    height: height,
+                };
+                // create the editable-field in the pdf
+                page.createTextField(fieldName)
+
             });
         }
     });
@@ -293,11 +303,12 @@ toolboxFields.forEach(toolboxField => {
 canvas.addEventListener('drop', function (event) {
     event.preventDefault();
     let className = lastDrag.id;
-    console.log("dropping : " + className)
+    console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
+    console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
     const offsetX = event.clientX - startX; //- canvas.getBoundingClientRect().left;
     const offsetY = event.clientY - startY; //- canvas.getBoundingClientRect().top;
     const fieldName = lastDrag.text;
-    if (lastDrag.parentElement == 'canvas') {
+    if (lastDrag.parentElement.parentElement.id == 'pdf-container') {
         lastDrag.style.left = offsetX + 'px';
         lastDrag.style.top = offsetY + 'px';
     } else {
