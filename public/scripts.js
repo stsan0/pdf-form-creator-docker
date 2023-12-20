@@ -8,7 +8,7 @@ let pdfDoc = null;
 let canvas = document.getElementById('canvas');
 let lastDrag = null;
 pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.mjs';
-
+const scale = 2;
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
@@ -26,10 +26,11 @@ async function loadPdf() {
             var pageNumber = 1;
             pdf.getPage(pageNumber).then(function (page) {
                 console.log('Page loaded');
+                console.log(page)
+                console.log(page.view)
 
-                var scale = 1.5;
                 var viewport = page.getViewport({ scale: scale });
-
+                console.log(viewport)
                 // Prepare canvas using PDF page dimensions
                 var pdfframe = document.getElementById('pdfframe');
                 var context = pdfframe.getContext('2d');
@@ -100,6 +101,7 @@ function renderPdf() {
     // add editable-fields on top of pdf
     fields.forEach(field => {
         // if textfield then create editable-field
+
         if (field.constructor.name == "PDFTextField2") {
             //const type = field.constructor.name
             const name = field.getName()
@@ -122,8 +124,8 @@ function renderPdf() {
 async function createEditableField(x, y, className, inner, width, height) {
     const fieldText = document.createElement('div');
     // offset the field by the x and y values of the iframe to get the correct position
-    fieldText.style.left = x + 150 + 'px';
-    fieldText.style.bottom = y + 350 + 'px';
+    fieldText.style.left = x * scale + 'px';
+    fieldText.style.bottom = y * scale + 'px';
     //field.style.width = width + 'px';
     //field.style.height = height + 'px';
     //if (inner = 'undefined') {
@@ -250,6 +252,7 @@ async function editForm() {
         for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
             // Get the page object for the current page
             pdfDoc.getPage(pageNum).then(page => {
+
                 const field = page.getTextField(fieldName);
                 if (field) {
                     field.removeFromPage();
