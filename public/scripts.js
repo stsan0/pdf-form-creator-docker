@@ -93,6 +93,7 @@ function renderPdf() {
     const form = pdfDoc.getForm();
     const fields = form.getFields();
     // make  canvas the same size as the pdfframe
+    let canvas = document.getElementById('canvas');
     canvas.width = pdfframe.width;
     canvas.height = pdfframe.height;
     // add editable-fields on top of pdf
@@ -120,15 +121,18 @@ function renderPdf() {
 async function createEditableField(x, y, className, inner, width, height) {
     const fieldText = document.createElement('div');
     // offset the field by the x and y values of the iframe to get the correct position
-    fieldText.style.left = x + 'px';
-    fieldText.style.bottom = y + 'px';
-
+    fieldText.style.left = x + 150 + 'px';
+    fieldText.style.bottom = y + 350 + 'px';
     //field.style.width = width + 'px';
     //field.style.height = height + 'px';
     //if (inner = 'undefined') {
     //    inner = ' ';
     //}
+    if (inner == 'undefined' || inner == null) {
+        inner = ' ';
+    }
     fieldText.innerText = inner;
+    fieldText.text = inner;
     // change div id to name
     if (className == 'editable-field' || !className) {
         fieldText.id = prompt("Prior name is " + className + ". Please enter a name for the field", console.log(fieldText.id));
@@ -136,8 +140,27 @@ async function createEditableField(x, y, className, inner, width, height) {
 
         fieldText.id = className;
     }
-    fieldText.style.width = width + 'px';
-    fieldText.style.height = height + 'px';
+    // turn width and height into strings, so we can check for "px"
+    width = width.toString();
+    height = height.toString();
+    // If the width and height do not have "px" at the end, add it
+    if (width.includes('px') != true) {
+        width = width + 'px';
+        fieldText.style.width = width;
+    }
+    else {
+        fieldText.style.width = width;
+    }
+    if (!height.includes('px') != true) {
+        height = height + 'px';
+        fieldText.style.height = height;
+    }
+    else {
+        fieldText.style.height = height;
+    }
+
+
+
     fieldText.draggable = true;
     // use the html font size, font color, font style values to update the editable-field's font properties
     const fontSize = document.getElementById('fontSize').value;
@@ -270,20 +293,15 @@ toolboxFields.forEach(toolboxField => {
 canvas.addEventListener('drop', function (event) {
     event.preventDefault();
     let className = lastDrag.id;
-    console.log("draggin' : " + className)
-    if (className == ' ' || !className) {// get the id  of the element being dragged
-        className = lastDrag.id;
-        console.log("canvas drop: " + className);
-
-    }
+    console.log("dropping : " + className)
     const offsetX = event.clientX - startX; //- canvas.getBoundingClientRect().left;
     const offsetY = event.clientY - startY; //- canvas.getBoundingClientRect().top;
-    const fieldName = lastDrag.text
+    const fieldName = lastDrag.text;
     if (lastDrag.parentElement == 'canvas') {
         lastDrag.style.left = offsetX + 'px';
         lastDrag.style.top = offsetY + 'px';
     } else {
-        const editableField = createEditableField(offsetX, offsetY, className, fieldName, '100px', '100px').then(function (editableField) {
+        const editableField = createEditableField(offsetX, offsetY, className, fieldName, lastDrag.style.width, lastDrag.style.height).then(function (editableField) {
             canvas.appendChild(editableField);
         });
     }
