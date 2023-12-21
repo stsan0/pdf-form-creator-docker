@@ -1,6 +1,8 @@
 // Create editable field
 export default async function createEditableField(x, y, className, inner, width, height, scale) {
     const fieldText = document.createElement('div');
+    // TODO: include the constructor name in the data-field attribute, so that 
+    // we can use it to create the correct field type when we are editing the form
     // offset the field by the x and y values of the iframe to get the correct position
     fieldText.style.left = x * scale + 'px';
     fieldText.style.bottom = y * scale + 'px';
