@@ -58,7 +58,7 @@ export default async function createEditableField(x, y, className, inner, width,
 
             //console.log('width changed to ' + event.target.style.width);
         }
-        const blank = prompt('Fill the blank:', fieldText.innerText);
+        const blank = prompt('Fill the name: ', fieldText.innerText);
         if (blank !== null) {
             fieldText.innerText = blank;
             console.log('Updated:', blank);

@@ -90,8 +90,18 @@ function renderPdf() {
         // if textfield then create editable-field
         if (field.constructor.name == "PDFTextField2") {
             //const type = field.constructor.name
-            const name = field.getName()
+            let name = field.getName()
             const textField = form.getTextField(name)
+            let i = 0;
+            if (!textField) {
+                textField = form.getField(name);
+                i = 0;
+            }
+            // if the name is too similar to a previous textfield name, stop the overwriting then add a number to the end
+            if (textField == document.querySelectorAll('[data-field=' + name + ']')) {
+                i++;
+                name = name + "#" + i;
+            }
             const inner = textField.getText()
             const widgets = field.acroField.getWidgets();
             //widgets.forEach((w) => {
@@ -102,6 +112,9 @@ function renderPdf() {
             const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
                 canvas.appendChild(editableField);
             });
+        }
+        else {
+            console.log(field.getName + " constructor is " + field.constructor.name)
         }
     });
 }
