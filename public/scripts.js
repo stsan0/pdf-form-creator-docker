@@ -6,6 +6,7 @@ import createEditableField from './createEditableField.js';
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf)
 document.getElementById("showValuesBtn").addEventListener("click", showFieldValues)
 document.getElementById("editFormBtn").addEventListener("click", editForm)
+document.getElementById("displayFieldsBtn").addEventListener("click", displayFields)
 
 let pdfDoc = null;
 let canvas = document.getElementById('canvas');
@@ -28,11 +29,11 @@ async function loadPdf() {
             var pageNumber = 1;
             pdf.getPage(pageNumber).then(function (page) {
                 console.log('Page loaded');
-                console.log(page)
-                console.log(page.view)
+                //console.log(page)
+                //console.log(page.view)
 
                 var viewport = page.getViewport({ scale: scale });
-                console.log(viewport)
+                //console.log(viewport)
                 // Prepare canvas using PDF page dimensions
                 var pdfframe = document.getElementById('pdfframe');
                 var context = pdfframe.getContext('2d');
@@ -85,6 +86,7 @@ function renderPdf() {
     let canvas = document.getElementById('canvas');
     canvas.width = pdfframe.width;
     canvas.height = pdfframe.height;
+    let i = 0;
     // add editable-fields on top of pdf
     fields.forEach(field => {
         // if textfield then create editable-field
@@ -92,16 +94,6 @@ function renderPdf() {
             //const type = field.constructor.name
             let name = field.getName()
             const textField = form.getTextField(name)
-            let i = 0;
-            if (!textField) {
-                textField = form.getField(name);
-                i = 0;
-            }
-            // if the name is too similar to a previous textfield name, stop the overwriting then add a number to the end
-            if (textField == document.querySelectorAll('[data-field=' + name + ']')) {
-                i++;
-                name = name + "#" + i;
-            }
             const inner = textField.getText()
             const widgets = field.acroField.getWidgets();
             //widgets.forEach((w) => {
@@ -109,15 +101,37 @@ function renderPdf() {
             //});
             const rect = widgets[0].getRectangle(); //{ x, y, width, height } We're just using the top left corner.
             //console.log( "renderPdf: " + rect.x + " " + rect.y + " " + type + " " + name + " " + inner)
-            const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
-                canvas.appendChild(editableField);
+            // check if field is already in canvas with a editable-field, check by data-field
+            const editableFields = document.querySelectorAll('editable-field');
+            console.log("checking if " + name + " already exists with " + editableFields.length + " editable-fields")
+            let exists = false;
+            editableFields.forEach(editableField => {
+                if (editableField.getAttribute('data-field') == name) {
+                    exists = true;
+                }
             });
-        }
+            if (exists) {
+            // add a #i to the end of the name to make it unique
+                name = name + "#" + i;
+                console.log(name + " already exists, adding #"+ i + " to the end")
+                i++;
+                const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
+                    canvas.appendChild(editableField); });    
+            }
+            else {
+                i = 0;
+                const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
+                    canvas.appendChild(editableField);});
+                
+            }    
+    }
         else {
             console.log(field.getName + " constructor is " + field.constructor.name)
         }
     });
 }
+
+
 
 async function editForm() {
     if (!pdfDoc) return;
@@ -175,4 +189,29 @@ function downloadPdf(data, filename) {
     link.href = URL.createObjectURL(blob);
     link.download = filename;
     link.click();
+}
+
+let pressed = false;
+async function displayFields() {
+    const editableFields = document.querySelectorAll('#editable-field');
+    if (!pressed) {
+        editableFields.forEach(editableField => {
+            // set the value of the editable-field to the text data-field
+            editableField.innerHTML = editableField.getAttribute('data-field');
+            // set the innerhtml background to black but keep editable-field's block background
+            editableField.style.backgroundColor = "black";
+            editableField.style.color = "white";
+        });
+    }
+    else {
+        editableFields.forEach(editableField => {
+            // set the value of the editable-field to nothing
+            editableField.style.backgroundColor = "transparent";
+            editableField.style.color = "black";
+            editableField.innerHTML = "  ";
+
+        });
+    }
+
+    pressed = !pressed;
 }
