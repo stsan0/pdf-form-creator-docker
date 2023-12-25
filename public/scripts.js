@@ -111,20 +111,22 @@ function renderPdf() {
                 }
             });
             if (exists) {
-            // add a #i to the end of the name to make it unique
+                // add a #i to the end of the name to make it unique
                 name = name + "#" + i;
-                console.log(name + " already exists, adding #"+ i + " to the end")
+                console.log(name + " already exists, adding #" + i + " to the end")
                 i++;
                 const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField); });    
+                    canvas.appendChild(editableField);
+                });
             }
             else {
                 i = 0;
                 const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);});
-                
-            }    
-    }
+                    canvas.appendChild(editableField);
+                });
+
+            }
+        }
         else {
             console.log(field.getName + " constructor is " + field.constructor.name)
         }
@@ -195,20 +197,33 @@ let pressed = false;
 async function displayFields() {
     const editableFields = document.querySelectorAll('#editable-field');
     if (!pressed) {
+        console.log("displaying fields");
         editableFields.forEach(editableField => {
-            // set the value of the editable-field to the text data-field
-            editableField.innerHTML = editableField.getAttribute('data-field');
-            // set the innerhtml background to black but keep editable-field's block background
-            editableField.style.backgroundColor = "black";
-            editableField.style.color = "white";
+            //console.log("displaying " + editableField.getAttribute('data-field'))
+            // make each editablefield's background transparent
+            editableField.style.backgroundColor = "transparent";
+            // make an overlay div for each editable-field, which shows the data-field name. 
+            // In the element structure, the overlay div is a sibling of the editable-field
+            const overlay = document.createElement('div');
+            overlay.style.position = 'absolute';
+            overlay.style.height = editableField.style.height;
+            overlay.style.backgroundColor = "black";
+            overlay.style.color = "white";
+            overlay.innerHTML = editableField.getAttribute('data-field');
+            overlay.text = editableField.getAttribute('data-field');
+            overlay.id = 'overlay';
+            overlay.draggable = true;
+            // add the overlay div as a child of the editable-field, so that it is on top of the editable-field
+            editableField.prepend(overlay);
         });
     }
     else {
         editableFields.forEach(editableField => {
-            // set the value of the editable-field to nothing
-            editableField.style.backgroundColor = "transparent";
-            editableField.style.color = "black";
-            editableField.innerHTML = "  ";
+            // delete all overlays
+            const overlays = document.querySelectorAll('#overlay');
+            overlays.forEach(overlay => {
+                overlay.remove();
+            });
 
         });
     }

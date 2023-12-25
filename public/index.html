@@ -22,12 +22,16 @@
     <button id="editFormBtn">Save Form</button>
   </div>
   <div id="pdf-container">
-    <div class="col-xs-4 col-xs-offset-2" id="canvas"></div> <!-- Holds all editable-text-fields -->
+    <div id="canvas"></div> <!-- Holds all editable-text-fields -->
     <canvas id="pdfframe"> </canvas> <!-- holds the pdf page display -->
   </div>
   <div id="toolbox">
-    <div class="toolbox-field" draggable="true" data-field-name="editable-field">Text Field</div>
+    <div id="toolbox-field" draggable="true" data-field="editable-field">Text Field</div>
     <div id="fontControls">
+      <label for="dataField"> Data Field: </label>
+      <input type="text" id="dataField" value="dataField">
+      <label for="innerText"> Inner Text: </label>
+      <input type="text" id="innerText" value="innerText">
       <label for="fontSize">Font Size:</label>
       <input type="number" id="fontSize" value="12" min="6" max="48">
       <br></br>
@@ -113,12 +117,20 @@
     }
     modalOk.onclick = function () {
       //console.log(modal,modal.querySelector('#fontFamily').value);	
+      efb.setAttribute('data-field', modal.querySelector('#dataField').value);
+      efb.innerText = modal.querySelector('#innerText').value;
+      // re-add the span "font-control fa fa-edit" to the element as a child
+      efb.appendChild(document.createElement('span'));
+      efb.lastChild.setAttribute('class', 'font-control fa fa-edit');
+
       efb.style.fontSize = modal.querySelector('#fontSize').value + 'px';
       efb.style.color = modal.querySelector('#fontColor').value;
       efb.style.fontFamily = modal.querySelector('#fontFamily').value;
       efb.style.fontStyle = modal.querySelector('#fontStyle').value;
       efb.style.fontWeight = modal.querySelector('#fontWeight').value;
+      efb = null;
       modal.style.display = "none";
+
     }
     function aferIconCheck(e) {
 

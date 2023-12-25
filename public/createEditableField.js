@@ -1,12 +1,11 @@
 // Create editable field
-export default async function createEditableField(x, y, className, inner, width, height, scale) {
+export default async function createEditableField(x, y, className, inner, width, height, scale = 2) {
     const fieldText = document.createElement('div');
-    // TODO: include the constructor name in the data-field attribute, so that 
-    // we can use it to create the correct field type when we are editing the form
-    // offset the field by the x and y values of the iframe to get the correct position
+    //make sure its absolute
+    fieldText.style.position = 'absolute';
     fieldText.style.left = x * scale + 'px';
     fieldText.style.bottom = y * scale + 'px';
-
+    console.log("position is " + fieldText.style.left + " " + fieldText.style.bottom)
     if (inner == 'undefined' || inner == null) {
         inner = ' ';
     }
@@ -15,7 +14,8 @@ export default async function createEditableField(x, y, className, inner, width,
     // add a datamember for the div, keep id as editable-field
     fieldText.id = 'editable-field';
     if (className == 'editable-field' || !className) {
-        className = prompt("Prior name is " + className + ". Please enter a name for the field", console.log(className));
+        className = prompt("Prior name is " + className + ". Please enter a name for the field");
+        console.log(className)
     }
     fieldText.setAttribute('data-field', className);
     // turn width and height into strings, so we can check for "px"
@@ -47,6 +47,37 @@ export default async function createEditableField(x, y, className, inner, width,
     updateTextFieldFontProperties(fieldText, fontSize, fontColor, fontStyle, fontFamily, fontWeight);
     //field.appendChild(fieldText);
 
+
+    const tag = document.createElement('span');
+    tag.className = "font-control fa fa-edit";
+    tag.innerHTML = "";
+
+    tag.addEventListener('click', function (e) {
+        efb = e.target.parentElement;
+        console.log(efb);
+        // When clicking the tag after editing, the efb is a null value. 
+        // This is because the tag is removed from the DOM when the modal is opened.
+
+        console.log(efb);
+        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
+        let mmodal = document.querySelector('.modal-body');
+        // change the data-field of the modal to the editable-field's data-field using efb
+        mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
+        // change the innerText of the modal to the editable-field's innerText using efb
+        mmodal.querySelector('#innerText').value = efb.innerText;
+        console.log(" we are changing " + efb.getAttribute('data-field') + " and " + efb.innerText);
+
+        mmodal.querySelector('#fontSize').value = efb.style.fontSize.replace('px', '');
+        //console.log(efb.style.fontFamily);
+        mmodal.querySelector('#fontColor').value = RGBToHex(efb.style.color);
+        mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
+        mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
+        mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
+    });
+
+
+    fieldText.appendChild(tag);
+
     fieldText.addEventListener('click', function (event) {
         let o = '100px';
         if (event.target.hasAttribute('data-width')) {
@@ -58,13 +89,12 @@ export default async function createEditableField(x, y, className, inner, width,
 
             //console.log('width changed to ' + event.target.style.width);
         }
-        const blank = prompt('Fill the name: ', fieldText.innerText);
-        if (blank !== null) {
-            fieldText.innerText = blank;
-            console.log('Updated:', blank);
-
-            // You can send this newName to the server for further processing
-        }
+        // Make the click function = to tag's click function 
+        //console.log(event.target.getElementsByClassName('span'))
+        event.target.getElementsByClassName('span');
+        console.log("clicking " + event.target.id);
+        // click the tag, which is a child of the editable-field
+        tag.click();
     })
     fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();
@@ -75,24 +105,6 @@ export default async function createEditableField(x, y, className, inner, width,
         lastDrag = event.target;
     });
 
-    const tag = document.createElement('span');
-    tag.className = "font-control fa fa-edit";
-    tag.innerHTML = "";
-
-    tag.addEventListener('click', function (e) {
-        efb = e.target.parentElement.querySelector('.editable-field');
-        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
-        let mmodal = document.querySelector('.modal-body');
-        mmodal.querySelector('#fontSize').value = efb.style.fontSize.replace('px', '');
-        //console.log(efb.style.fontFamily);
-        mmodal.querySelector('#fontColor').value = RGBToHex(efb.style.color);
-        mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
-        mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
-        mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
-
-    });
-
-    fieldText.appendChild(tag);
     return fieldText;
 }
 
@@ -117,6 +129,7 @@ let startY = null;
 const toolboxFields = document.querySelectorAll('.editable-field');
 toolboxFields.forEach(toolboxField => {
     toolboxField.addEventListener('dragstart', function (event) {
+        dragging = true;
         const target = event.target.getBoundingClientRect();
         lastDrag = event.target;
         startX = event.clientX - target.x;
@@ -130,32 +143,63 @@ toolboxFields.forEach(toolboxField => {
     });
 });
 
+pdfContainer.addEventListener('dragstart', function (event) {
+    event.preventDefault();
+    dragging = true;
+}
+);
+
 // Add event listener for canvas drop
 pdfContainer.addEventListener('drop', function (event) {
     event.preventDefault();
     dragging = false;
-    let className = lastDrag.getAttribute('data-field');
-    console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
-    console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
-    const offsetX = event.clientX - canvas.getBoundingClientRect().left;
-    const offsetY = event.clientY - canvas.getBoundingClientRect().top;
-    const fieldName = lastDrag.text;
-    if (lastDrag.id == 'editable-field') {
-        lastDrag.style.left = offsetX + 'px';
-        lastDrag.style.top = offsetY + 'px';
-    } else {
-        const editableField = createEditableField(offsetX, offsetY, className, fieldName, lastDrag.style.width, lastDrag.style.height).then(function (editableField) {
+    if (lastDrag == null) {
+        // generate a new field with the toolbox field's name
+        // and the canvas' x and y coordinates
+        console.log("lastDrag is null")
+        let width = 100;
+        let height = 50;
+        let offsetX = (event.clientX - event.target.getBoundingClientRect().x) / 2;
+        let offsetY = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
+        // x, y, className, inner, width, height, scale = 2
+        const editableField = createEditableField(offsetX, offsetY, event.target.dataset.fieldName, '   ', width, height).then(function (editableField) {
             canvas.appendChild(editableField);
         });
+        return;
     }
+    if (lastDrag.id == 'editable-field') {
+        let className = lastDrag.getAttribute('data-field');
+        console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
+        console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
+        const offsetX = event.clientX - canvas.getBoundingClientRect().left;
+        const offsetY = event.clientY - canvas.getBoundingClientRect().top;
+        const fieldName = lastDrag.text; // TODO: the vertical position is using top, not bottom.
+        lastDrag.style.left = offsetX + 'px';
+        lastDrag.style.top = offsetY + 'px';
+    }
+    lastDrag = null;
 });
 
 // Prevent default behavior to allow drop
 pdfContainer.addEventListener('dragover', function (event) {
     event.preventDefault();
+    dragging = false;
 });
 
-document.onmousemove = function (e) {
-    if (!dragging) return;
+pdfContainer.onmousemove = function (e) {
+    if (dragging == false) return;
+    e.preventDefault();
+    let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
+    let pos2 = e.clientY - startY - canvas.getBoundingClientRect().top;
+    //console.log("moving " + lastDrag.id + " to " + pos1 + " " + pos2)
+    lastDrag.style.left = pos1 + 'px';
+    lastDrag.style.top = pos2 + 'px';
 }
+
+// Add event listener for when mouse button is released
+pdfContainer.addEventListener('mouseup', function (event) {
+    dragging = false;
+    lastDrag = null;
+
+});
 
