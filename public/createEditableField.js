@@ -9,8 +9,25 @@ export default async function createEditableField(x, y, className, inner, width,
     if (inner == 'undefined' || inner == null) {
         inner = ' ';
     }
+    if (inner == true || inner == false) {
+        inner = inner.toString();
+        // turn true into a checkmark
+        if (inner == 'true') {
+            inner = 'true';
+        }
+        // turn false into an empty string
+        if (inner == 'false') {
+            inner = '';
+        }
+    }
+    // if inner is a string[]
+    if (inner instanceof Array) {
+        inner = inner.join('\n');
+    }
+
     fieldText.innerText = inner;
     fieldText.text = inner;
+
     // add a datamember for the div, keep id as editable-field
     fieldText.id = 'editable-field';
     if (className == 'editable-field' || !className) {
@@ -19,24 +36,13 @@ export default async function createEditableField(x, y, className, inner, width,
     }
     fieldText.setAttribute('data-field', className);
     // turn width and height into strings, so we can check for "px"
-    width = width.toString();
-    height = height.toString();
+    width = width.toString().replace('px', '') * 1 * scale;
+    width += 'px';
+    height = height.toString().replace('px', '') * 1 * scale;
+    height += 'px';
     // If the width and height do not have "px" at the end, add it
-    if (width.includes('px') != true) {
-        width = width + 'px';
-        fieldText.style.width = width;
-    }
-    else {
-        fieldText.style.width = width;
-    }
-    if (height.includes('px') != true) {
-        height = height + 'px';
-        fieldText.style.height = height;
-    }
-    else {
-        fieldText.style.height = height;
-    }
-
+    fieldText.style.width = width;
+    fieldText.style.height = height;
     fieldText.draggable = true;
     // use the html font size, font color, font style values to update the editable-field's font properties
     const fontSize = document.getElementById('fontSize').value;
@@ -54,10 +60,8 @@ export default async function createEditableField(x, y, className, inner, width,
 
     tag.addEventListener('click', function (e) {
         efb = e.target.parentElement;
-        console.log(efb);
-        // When clicking the tag after editing, the efb is a null value. 
-        // This is because the tag is removed from the DOM when the modal is opened.
-
+        // TODO: make the tag see the parent element after the first time used for editing
+        console.log(e.target);
         console.log(efb);
         openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
         let mmodal = document.querySelector('.modal-body');
@@ -94,7 +98,7 @@ export default async function createEditableField(x, y, className, inner, width,
         event.target.getElementsByClassName('span');
         console.log("clicking " + event.target.id);
         // click the tag, which is a child of the editable-field
-        tag.click();
+        //tag.click();
     })
     fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();

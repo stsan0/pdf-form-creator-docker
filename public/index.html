@@ -18,7 +18,7 @@
     <input type="file" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn">Load PDF</button>
     <button id="displayFieldsBtn"> Display Fields </button>
-    <button id="showValuesBtn">Extract Field to List</button>
+    <button id="showValuesBtn" style="display:none">Extract Field to List</button>
     <button id="editFormBtn">Save Form</button>
   </div>
   <div id="pdf-container">
@@ -26,8 +26,11 @@
     <canvas id="pdfframe"> </canvas> <!-- holds the pdf page display -->
   </div>
   <div id="toolbox">
-    <div id="toolbox-field" draggable="true" data-field="editable-field">Text Field</div>
-    <div id="fontControls">
+    <div id="toolbox-field" draggable="true" data-field="editable-field"
+      style=" border-color: black; box-shadow: var(--focus-01); padding: 20px">
+      Draggable Text
+      Field</div>
+    <div id="fontControls" style="visibility: hidden;">
       <label for="dataField"> Data Field: </label>
       <input type="text" id="dataField" value="dataField">
       <label for="innerText"> Inner Text: </label>
@@ -122,15 +125,32 @@
       // re-add the span "font-control fa fa-edit" to the element as a child
       efb.appendChild(document.createElement('span'));
       efb.lastChild.setAttribute('class', 'font-control fa fa-edit');
+      efb.lastChild.addEventListener('click', function (e) {
+        efb = e.target.parentElement;
+        // TODO: make the tag see the parent element after the first time used for editing
+        console.log(e.target);
+        console.log(efb);
+        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
+        let mmodal = document.querySelector('.modal-body');
+        // change the data-field of the modal to the editable-field's data-field using efb
+        mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
+        // change the innerText of the modal to the editable-field's innerText using efb
+        mmodal.querySelector('#innerText').value = efb.innerText;
+        console.log(" we are changing " + efb.getAttribute('data-field') + " and " + efb.innerText);
+
+        mmodal.querySelector('#fontSize').value = efb.style.fontSize.replace('px', '');
+        //console.log(efb.style.fontFamily);
+        mmodal.querySelector('#fontColor').value = RGBToHex(efb.style.color);
+        mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
+        mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
+        mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
+      });
 
       efb.style.fontSize = modal.querySelector('#fontSize').value + 'px';
       efb.style.color = modal.querySelector('#fontColor').value;
       efb.style.fontFamily = modal.querySelector('#fontFamily').value;
       efb.style.fontStyle = modal.querySelector('#fontStyle').value;
       efb.style.fontWeight = modal.querySelector('#fontWeight').value;
-      efb = null;
-      modal.style.display = "none";
-
     }
     function aferIconCheck(e) {
 
