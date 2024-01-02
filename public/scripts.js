@@ -214,4 +214,11 @@ async function displayFields() {
     }
 
     pressed = !pressed;
+    // display the state of pressed in the button of document.getElementById("displayFieldsBtn")
+    if (pressed) {
+        document.getElementById("displayFieldsBtn").innerHTML = "Hide Fields";
+    }
+    else {
+        document.getElementById("displayFieldsBtn").innerHTML = "Show Fields";
+    }
 }
