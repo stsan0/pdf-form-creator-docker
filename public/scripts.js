@@ -1,4 +1,4 @@
-import { PDFDocument, PDFName, PDFRef } from 'https://cdn.skypack.dev/pdf-lib';
+import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 import extractText from './extract_text.js';
 import createEditableField from './createEditableField.js';
@@ -11,6 +11,8 @@ document.getElementById("displayFieldsBtn").addEventListener("click", displayFie
 let pdfDoc = null;
 pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.mjs';
 const scale = 2;
+let form = null;
+let fields = null;
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
@@ -19,13 +21,13 @@ async function loadPdf() {
         pdfDoc = await PDFDocument.load(data);
         const loadingTask = pdfjs_viewer.getDocument(data);
         loadingTask.promise.then(function (pdf) {
-            console.log('PDF loaded');
-            // TODO: make this a loop to fetch all pages and render them with their page-specific fields
+            // display the pages of the PDF in canvas
             for (let pageNumber = 0; pageNumber < pdf.numPages; pageNumber++) {
                 pdf.getPage(pageNumber + 1).then(function (page) {
                     console.log('Page loaded');
                     var viewport = page.getViewport({ scale: scale });
-                    var pdfframe = document.getElementById('pdfframe');
+                    var pdfframe = document.createElement('canvas');
+                    pdfframe.id = 'pdfframe-' + pageNumber;
                     var context = pdfframe.getContext('2d');
                     pdfframe.height = viewport.height;
                     pdfframe.width = viewport.width;
@@ -35,9 +37,12 @@ async function loadPdf() {
                         viewport: viewport
                     };
                     var renderTask = page.render(renderContext);
+                    var pdfContainer = document.getElementById('pdf-container');
+                    pdfContainer.appendChild(pdfframe);
+
                     renderTask.promise.then(function () {
                         console.log('Page rendered');
-                        renderPdf(page);
+                        renderPdf(pdfframe, pageNumber); // add editable fields on top of pdf
                     });
                 });
             }
@@ -45,25 +50,24 @@ async function loadPdf() {
             // PDF loading error
             console.error(reason);
         });
+        console.log('PDF loaded');
     }
 }
 
-async function renderPdf(page) {
-    const form = pdfDoc.getForm();
-    const fields = form.getFields();
-    let canvas = document.getElementById('canvas');
-    canvas.width = pdfframe.width;
-    canvas.height = pdfframe.height;
+async function renderPdf(frame, page) {
+    if (form == null) {
+        form = pdfDoc.getForm();
+        fields = form.getFields();
+    }
     fields.forEach(field => {
-        createEF(field, form, canvas, page);
+        createEF(field, form, frame, page);
     });
 }
 
-function createEF(field, form, canvas, page) {
+function createEF(field, form, frame, page) {
     let name = field.getName();
     const widgets = field.acroField.getWidgets();
     for (const widget of widgets) {
-        const rect = widget.getRectangle();
         let value;
         if (field.constructor.name == "PDFTextField2") {
             const textField = form.getTextField(name);
@@ -87,6 +91,10 @@ function createEF(field, form, canvas, page) {
             console.log(field.getName + " constructor is " + field.constructor.name);
             return;
         }
+        const rect = widget.getRectangle();
+        const pageRect = frame.getBoundingClientRect();
+        console.log(pageRect);
+        console.log(name + " pagenum: " + page + " xy : " + rect.x + " " + rect.y);
         createEditableField(rect.x, rect.y, name, value, rect.width, rect.height, scale).then(function (editableField) {
             canvas.appendChild(editableField);
         });
