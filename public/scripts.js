@@ -9,58 +9,87 @@ document.getElementById("editFormBtn").addEventListener("click", editForm)
 document.getElementById("displayFieldsBtn").addEventListener("click", displayFields)
 
 let pdfDoc = null;
-let canvas = document.getElementById('canvas');
 pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.mjs';
 const scale = 2;
 async function loadPdf() {
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
-    // Add an iframe inside pdf-container for PDF to render onto, under canvas as a layer below
-    const iframe = document.getElementById('pdfframe');
-
     if (file) {
         const data = await file.arrayBuffer();
         pdfDoc = await PDFDocument.load(data);
         const loadingTask = pdfjs_viewer.getDocument(data);
         loadingTask.promise.then(function (pdf) {
             console.log('PDF loaded');
+            // TODO: make this a loop to fetch all pages and render them with their page-specific fields
+            for (let pageNumber = 0; pageNumber < pdf.numPages; pageNumber++) {
+                pdf.getPage(pageNumber + 1).then(function (page) {
+                    console.log('Page loaded');
+                    var viewport = page.getViewport({ scale: scale });
+                    var pdfframe = document.getElementById('pdfframe');
+                    var context = pdfframe.getContext('2d');
+                    pdfframe.height = viewport.height;
+                    pdfframe.width = viewport.width;
 
-            // Fetch the first page 
-            // TODO: make this a loop to fetch all pages and render them with their fields
-            var pageNumber = 1;
-            pdf.getPage(pageNumber).then(function (page) {
-                console.log('Page loaded');
-                //console.log(page)
-                //console.log(page.view)
-
-                var viewport = page.getViewport({ scale: scale });
-                //console.log(viewport)
-                // Prepare canvas using PDF page dimensions
-                var pdfframe = document.getElementById('pdfframe');
-                var context = pdfframe.getContext('2d');
-                pdfframe.height = viewport.height;
-                pdfframe.width = viewport.width;
-
-                // Render PDF page into canvas context
-                var renderContext = {
-                    canvasContext: context,
-                    viewport: viewport
-                };
-                var renderTask = page.render(renderContext);
-                renderTask.promise.then(function () {
-                    console.log('Page rendered');
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    var renderTask = page.render(renderContext);
+                    renderTask.promise.then(function () {
+                        console.log('Page rendered');
+                        renderPdf(page);
+                    });
                 });
-            });
+            }
         }, function (reason) {
             // PDF loading error
             console.error(reason);
         });
-        /*const pdfBytes = await pdfDoc.save();
-        const pdfDataUri = await pdfDoc.saveAsBase64({ dataUri: true });
-        
-        iframe.src = (pdfDataUri + "#toolbar=0");
-        */
-        renderPdf();
+    }
+}
+
+async function renderPdf(page) {
+    const form = pdfDoc.getForm();
+    const fields = form.getFields();
+    let canvas = document.getElementById('canvas');
+    canvas.width = pdfframe.width;
+    canvas.height = pdfframe.height;
+    fields.forEach(field => {
+        createEF(field, form, canvas, page);
+    });
+}
+
+function createEF(field, form, canvas, page) {
+    let name = field.getName();
+    const widgets = field.acroField.getWidgets();
+    for (const widget of widgets) {
+        const rect = widget.getRectangle();
+        let value;
+        if (field.constructor.name == "PDFTextField2") {
+            const textField = form.getTextField(name);
+            value = textField.getText();
+        } else if (field.constructor.name == "PDFCheckBox2") {
+            const checkBox = form.getCheckBox(name);
+            value = checkBox.isChecked();
+        } else if (field.constructor.name == "PDFRadioGroup2") {
+            const radioButton = form.getRadioGroup(name);
+            value = radioButton.getSelected();
+        } else if (field.constructor.name == "PDFDropdown2") {
+            const dropdown = form.getDropdown(name);
+            value = dropdown.getSelected();
+        } else if (field.constructor.name == "PDFListbox2") {
+            const listbox = form.getListbox(name);
+            value = listbox.getSelected();
+        } else if (field.constructor.name == "PDFSignature2") {
+            const signature = form.getSignature(name);
+            value = signature.getContents();
+        } else {
+            console.log(field.getName + " constructor is " + field.constructor.name);
+            return;
+        }
+        createEditableField(rect.x, rect.y, name, value, rect.width, rect.height, scale).then(function (editableField) {
+            canvas.appendChild(editableField);
+        });
     }
 }
 
@@ -79,91 +108,6 @@ async function showFieldValues() {
         );
     }
 }
-function renderPdf() {
-    // TODO: CORRECT THE OFFSET OF ELEMENTS ON DROP
-    const form = pdfDoc.getForm();
-    // TODO: use catalog instead of pdfForm to get fields. Use i for duplicate field names
-    const catalog = pdfDoc.catalog;
-    const fields = form.getFields();
-    // make  canvas the same size as the pdfframe
-    let canvas = document.getElementById('canvas');
-    canvas.width = pdfframe.width;
-    canvas.height = pdfframe.height;
-    let i = 0;
-    // add editable-fields on top of pdf
-    fields.forEach(field => {
-        // if textfield then create editable-field
-        if (field.constructor.name == "PDFTextField2") {
-            //const type = field.constructor.name
-            let name = field.getName()
-            const textField = form.getTextField(name)
-            const inner = textField.getText()
-            const widgets = field.acroField.getWidgets();
-            //widgets.forEach((w) => {
-            //    const rect = w.getRectangle(); //{ x, y, width, height } This takes all four points that make up the rectangle.
-            //});
-            const rect = widgets[0].getRectangle(); //{ x, y, width, height } We're just using the top left corner.
-            //console.log( "renderPdf: " + rect.x + " " + rect.y + " " + type + " " + name + " " + inner)
-            i = 0;
-            const promise = createEditableField(rect.x, rect.y, name, inner, rect.width, rect.height, scale).then(function (editableField) {
-                canvas.appendChild(editableField);
-            });
-        }
-        else {
-            console.log(field.getName + " constructor is " + field.constructor.name)
-            // TODO: add other field types
-            let name = field.getName()
-            // for checkbox
-            if (field.constructor.name == "PDFCheckBox2") {
-                const checkBox = form.getCheckBox(name)
-                const widgets = field.acroField.getWidgets();
-                const rect = widgets[0].getRectangle();
-                const promise = createEditableField(rect.x, rect.y, name, checkBox.isChecked(), rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);
-                });
-            }
-            // for radio button
-            if (field.constructor.name == "PDFRadioGroup2") {
-                const radioButton = form.getRadioGroup(name)
-                const widgets = field.acroField.getWidgets();
-                const rect = widgets[0].getRectangle();
-                const promise = createEditableField(rect.x, rect.y, name, radioButton.getSelected(), rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);
-                });
-            }
-            // for dropdown
-            if (field.constructor.name == "PDFDropdown2") {
-                const dropdown = form.getDropdown(name)
-                const widgets = field.acroField.getWidgets();
-                const rect = widgets[0].getRectangle();
-                const promise = createEditableField(rect.x, rect.y, name, dropdown.getSelected(), rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);
-                });
-            }
-
-            // for listbox
-            if (field.constructor.name == "PDFListbox2") {
-                const listbox = form.getListbox(name)
-                const widgets = field.acroField.getWidgets();
-                const rect = widgets[0].getRectangle();
-                const promise = createEditableField(rect.x, rect.y, name, listbox.getSelected(), rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);
-                });
-            }
-            // for signature
-            if (field.constructor.name == "PDFSignature2") {
-                const signature = form.getSignature(name)
-                const widgets = field.acroField.getWidgets();
-                const rect = widgets[0].getRectangle();
-                const promise = createEditableField(rect.x, rect.y, name, signature.getContents(), rect.width, rect.height, scale).then(function (editableField) {
-                    canvas.appendChild(editableField);
-                });
-            }
-        }
-    });
-}
-
-
 
 async function editForm() {
     if (!pdfDoc) return;
@@ -223,7 +167,7 @@ async function editForm() {
     //}
     // save to pdf
     const modifiedPdfBytes = await pdfDoc.save();
-    downloadPdf(modifiedPdfBytes, 'modified.pdf');
+    downloadPdf(modifiedPdfBytes, pdfDoc.getTitle() + '_modified.pdf');
 }
 
 function downloadPdf(data, filename) {

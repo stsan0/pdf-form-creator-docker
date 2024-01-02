@@ -5,7 +5,7 @@ export default async function createEditableField(x, y, className, inner, width,
     fieldText.style.position = 'absolute';
     fieldText.style.left = x * scale + 'px';
     fieldText.style.bottom = y * scale + 'px';
-    console.log("position is " + fieldText.style.left + " " + fieldText.style.bottom)
+    //console.log("position is " + fieldText.style.left + " " + fieldText.style.bottom)
     if (inner == 'undefined' || inner == null) {
         inner = ' ';
     }
@@ -16,7 +16,7 @@ export default async function createEditableField(x, y, className, inner, width,
             inner = 'true';
         }
         // turn false into an empty string
-        if (inner == 'false') {
+        else {
             inner = '';
         }
     }
@@ -115,7 +115,7 @@ export default async function createEditableField(x, y, className, inner, width,
 // Function to update the text field with user-defined font properties
 function updateTextFieldFontProperties(textField, fontSize, fontColor, fontStyle, fontFamily, fontWeight) {
     // get the text field from the toolbox and update its font properties
-    console.log("updateTextFieldFontProperties: " + fontSize + " " + fontColor + " " + fontStyle + " " + fontFamily)
+    //console.log("updateTextFieldFontProperties: " + fontSize + " " + fontColor + " " + fontStyle + " " + fontFamily)
     textField.style.fontSize = (fontSize + "px");
     textField.style.color = fontColor;
     textField.style.fontFamily = fontFamily;
