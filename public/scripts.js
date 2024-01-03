@@ -13,7 +13,10 @@ pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.
 const scale = 2;
 let form = null;
 let fields = null;
+let pageItself = null;
+let pageIndex = null;
 async function loadPdf() {
+    areYouSure(); // adds a pop up if canvas and pdf-container are not empty
     const fileInput = document.getElementById('pdf-file-input');
     const file = fileInput.files[0];
     if (file) {
@@ -38,14 +41,16 @@ async function loadPdf() {
                     };
                     var renderTask = page.render(renderContext);
                     var pdfContainer = document.getElementById('pdf-container');
-                    pdfContainer.appendChild(pdfframe);
+                    var lastChild = pdfContainer.lastChild; // Get the last child
 
                     renderTask.promise.then(function () {
                         console.log('Page rendered');
-                        renderPdf(pdfframe, pageNumber); // add editable fields on top of pdf
+                        pdfContainer.insertBefore(pdfframe, lastChild); // Insert the child before the last child
                     });
                 });
             }
+            renderPdfFields(); // add editable fields on top of pdf
+
         }, function (reason) {
             // PDF loading error
             console.error(reason);
@@ -53,52 +58,87 @@ async function loadPdf() {
         console.log('PDF loaded');
     }
 }
+function areYouSure() {
+    // add a popup if canvas and pdf-container are not empty
+    const canvas = document.getElementById('canvas');
+    const pdfContainer = document.getElementById('pdf-container');
+    if (canvas.firstChild || pdfContainer.childElementCount > 1) {
+        if (confirm("Changes will be lost if you press OK and replace the current PDF. Press Cancel to keep the current PDF.")) {
+            while (canvas.firstChild) {
+                canvas.removeChild(canvas.firstChild);
+            }
+            for (let i = 0; i < pdfContainer.childElementCount; i++) {
+                const pdfframe = document.getElementById('pdfframe-' + i);
+                if (pdfframe != null) {
+                    pdfContainer.removeChild(pdfframe);
+                }
+            }
+            // reset pdfDoc
+            pdfDoc = null;
 
-async function renderPdf(frame, page) {
+        } else {
+            throw new Error("Cancelled");
+        }
+    }
+}
+
+async function renderPdfFields() {
     if (form == null) {
         form = pdfDoc.getForm();
         fields = form.getFields();
     }
     fields.forEach(field => {
-        createEF(field, form, frame, page);
+        const existingField = document.getElementById(field.getName());
+        if (!existingField) {
+            createEF(field, form);
+        }
+        else {
+            console.log("field " + field.getName() + " already exists");
+        }
     });
 }
 
-function createEF(field, form, frame, page) {
+function createEF(field, form) {
     let name = field.getName();
+    pageItself = null;
+    pageIndex = null;
     const widgets = field.acroField.getWidgets();
-    for (const widget of widgets) {
+    widgets.forEach((widget) => {
         let value;
-        if (field.constructor.name == "PDFTextField2") {
-            const textField = form.getTextField(name);
-            value = textField.getText();
-        } else if (field.constructor.name == "PDFCheckBox2") {
-            const checkBox = form.getCheckBox(name);
-            value = checkBox.isChecked();
-        } else if (field.constructor.name == "PDFRadioGroup2") {
-            const radioButton = form.getRadioGroup(name);
-            value = radioButton.getSelected();
-        } else if (field.constructor.name == "PDFDropdown2") {
-            const dropdown = form.getDropdown(name);
-            value = dropdown.getSelected();
-        } else if (field.constructor.name == "PDFListbox2") {
-            const listbox = form.getListbox(name);
-            value = listbox.getSelected();
-        } else if (field.constructor.name == "PDFSignature2") {
-            const signature = form.getSignature(name);
-            value = signature.getContents();
-        } else {
-            console.log(field.getName + " constructor is " + field.constructor.name);
-            return;
+        switch (field.constructor.name) {
+            case "PDFTextField2":
+                value = form.getTextField(name).getText();
+                break;
+            case "PDFCheckBox2":
+                value = form.getCheckBox(name).isChecked();
+                break;
+            case "PDFRadioGroup2":
+                value = form.getRadioGroup(name).getSelected();
+                break;
+            case "PDFDropdown2":
+                value = form.getDropdown(name).getSelected();
+                break;
+            case "PDFListbox2":
+                value = form.getListbox(name).getSelected();
+                break;
+            case "PDFSignature2":
+                value = form.getSignature(name).getContents();
+                break;
+            default:
+                console.log(field.getName + " constructor is " + field.constructor.name);
+                return;
         }
-        const rect = widget.getRectangle();
-        const pageRect = frame.getBoundingClientRect();
-        console.log(pageRect);
-        console.log(name + " pagenum: " + page + " xy : " + rect.x + " " + rect.y);
-        createEditableField(rect.x, rect.y, name, value, rect.width, rect.height, scale).then(function (editableField) {
+        const fieldRect = widget.getRectangle();
+        pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
+        pageIndex = pdfDoc.getPages().findIndex((p) => p.ref == widget.P());
+        //console.log(pageItself);
+        console.log(name + "'s page number: " + pageIndex);
+        createEditableField(fieldRect, pageIndex, name, value, scale).then(function (editableField) {
             canvas.appendChild(editableField);
+            pageItself = null;
+
         });
-    }
+    });
 }
 
 async function showFieldValues() {
@@ -128,7 +168,7 @@ async function editForm() {
         const target = editableField;
         // { x, y, width, height } 
         const x = parseInt(target.style.left) * (1 / scale);
-        const y = parseInt(target.style.bottom) * (1 / scale);
+        const y = parseInt(target.style.bottom) * (1 / scale); // TODO: opposite of y + pageHeight / scale * pageIndexOffset) * scale
         const width = parseInt(target.style.width) * (1 / scale);
         const height = parseInt(target.style.height) * (1 / scale);
         //const textColor = RGBToHex(target.style.color);

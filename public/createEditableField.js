@@ -1,10 +1,27 @@
 // Create editable field
-export default async function createEditableField(x, y, className, inner, width, height, scale = 2) {
+export default async function createEditableField(rect, pageIndex, className, inner, scale = 2) {
+    let x = rect.x;
+    let y = rect.y;
+    let width = rect.width;
+    let height = rect.height;
     const fieldText = document.createElement('div');
     //make sure its absolute
     fieldText.style.position = 'absolute';
-    fieldText.style.left = x * scale + 'px';
-    fieldText.style.bottom = y * scale + 'px';
+
+    const pageHeight = 1584;
+    const pageIndexOffset = pageIndex;
+
+    fieldText.style.left = (x) * scale + 'px';
+    fieldText.style.bottom = (y + pageHeight / scale * pageIndexOffset) * scale + 'px';
+    // turn width and height into strings, so we can check for "px"
+    width = width.toString().replace('px', '') * 1 * scale;
+    width += 'px';
+    height = height.toString().replace('px', '') * 1 * scale;
+    height += 'px';
+    // If the width and height do not have "px" at the end, add it
+    fieldText.style.width = width;
+    fieldText.style.height = height;
+    fieldText.draggable = true;
     //console.log("position is " + fieldText.style.left + " " + fieldText.style.bottom)
     if (inner == 'undefined' || inner == null) {
         inner = ' ';
@@ -35,15 +52,7 @@ export default async function createEditableField(x, y, className, inner, width,
         console.log(className)
     }
     fieldText.setAttribute('data-field', className);
-    // turn width and height into strings, so we can check for "px"
-    width = width.toString().replace('px', '') * 1 * scale;
-    width += 'px';
-    height = height.toString().replace('px', '') * 1 * scale;
-    height += 'px';
-    // If the width and height do not have "px" at the end, add it
-    fieldText.style.width = width;
-    fieldText.style.height = height;
-    fieldText.draggable = true;
+
     // use the html font size, font color, font style values to update the editable-field's font properties
     const fontSize = document.getElementById('fontSize').value;
     const fontColor = document.getElementById('fontColor').value;
@@ -163,10 +172,11 @@ pdfContainer.addEventListener('drop', function (event) {
         console.log("lastDrag is null")
         let width = 100;
         let height = 50;
-        let offsetX = (event.clientX - event.target.getBoundingClientRect().x) / 2;
-        let offsetY = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
-        // x, y, className, inner, width, height, scale = 2
-        const editableField = createEditableField(offsetX, offsetY, event.target.dataset.fieldName, '   ', width, height).then(function (editableField) {
+        let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
+        let y = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
+        let pageNumber = event.target.dataset.pageNumber;
+        // x, y, width, height, pageRectangle, pageNumber, name, value, scale
+        const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ').then(function (editableField) {
             canvas.appendChild(editableField);
         });
         return;
