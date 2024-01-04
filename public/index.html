@@ -16,12 +16,23 @@
       <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy">
     </h1>
   </ul>
+
   <div id="selector">
     <input type="file" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn">Load PDF</button>
-    <button id="displayFieldsBtn"> Show Fields </button>
+    <button id="displayFieldsBtn">Show Fields</button>
     <button id="showValuesBtn" style="display:none">Extract Field to List</button>
     <button id="editFormBtn">Save Form</button>
+    <button id="backBtn">
+      <i class="fa fa-arrow-up"></i>
+      Back
+    </button>
+    <button id="nextBtn">
+      Next
+      <i class="fa fa-arrow-down"></i>
+    </button>
+    <div id="pageIndex"></div>
+    <div id="totalPageIndex"></div>
   </div>
   <div id="pdf-container">
     <div id="canvas"></div> <!-- Holds all editable-text-fields -->
@@ -145,6 +156,8 @@
         mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
         mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
         mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
+        // todo: send changes to the pdf form field
+        // markfieldasdirty so that it can be saved
       });
 
       efb.style.fontSize = modal.querySelector('#fontSize').value + 'px';

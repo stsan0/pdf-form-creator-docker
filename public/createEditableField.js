@@ -7,12 +7,13 @@ export default async function createEditableField(rect, pageIndex, className, in
     const fieldText = document.createElement('div');
     //make sure its absolute
     fieldText.style.position = 'absolute';
-
     const pageHeight = 1584;
     const pageIndexOffset = pageIndex;
+    fieldText.setAttribute('data-page', pageIndex);
 
     fieldText.style.left = (x) * scale + 'px';
-    fieldText.style.bottom = (y + pageHeight / scale * pageIndexOffset) * scale + 'px';
+    fieldText.style.bottom = (y) * scale + 'px';
+
     // turn width and height into strings, so we can check for "px"
     width = width.toString().replace('px', '') * 1 * scale;
     width += 'px';
@@ -174,7 +175,9 @@ pdfContainer.addEventListener('drop', function (event) {
         let height = 50;
         let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
         let y = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
-        let pageNumber = event.target.dataset.pageNumber;
+        let pageNumber = event.target.id.replace(/^[^\d]+/, "");
+        // remove the last bracket from the page number
+        pageNumber = pageNumber.replace(/\D+$/, "");
         // x, y, width, height, pageRectangle, pageNumber, name, value, scale
         const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ').then(function (editableField) {
             canvas.appendChild(editableField);
