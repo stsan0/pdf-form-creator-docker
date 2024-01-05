@@ -113,7 +113,7 @@ span.font-control.fa.fa-edit{
 .modal {
   display: none; /* Hidden by default */
   position: fixed;
-  top: 70%;
+  top: 80%;
   left: 86%;
   -webkit-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
@@ -126,6 +126,7 @@ span.font-control.fa.fa-edit{
     background: #eee;
     /* margin-top: 100px; */
     /* display: inline-block; */
+    scale:1.5;
 }
 
 /* Modal Content/Box */

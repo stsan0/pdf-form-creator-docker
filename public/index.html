@@ -10,73 +10,6 @@
 </head>
 
 <body>
-  <script src="scripts.js" type="module"></script>
-  <ul>
-    <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">
-      <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy">
-    </h1>
-  </ul>
-
-  <div id="selector">
-    <input type="file" id="pdf-file-input" accept=".pdf"> </input>
-    <button id="loadPdfBtn">Load PDF</button>
-    <button id="displayFieldsBtn">Show Fields</button>
-    <button id="showValuesBtn" style="display:none">Extract Field to List</button>
-    <button id="editFormBtn">Save Form</button>
-    <button id="backBtn">
-      <i class="fa fa-arrow-up"></i>
-      Back
-    </button>
-    <button id="nextBtn">
-      Next
-      <i class="fa fa-arrow-down"></i>
-    </button>
-    <div id="pageIndex"></div>
-    <div id="totalPageIndex"></div>
-  </div>
-  <div id="pdf-container">
-    <div id="canvas"></div> <!-- Holds all editable-text-fields -->
-  </div>
-  <div id="toolbox">
-    Drag'n'Drop to add fields
-    <div id="toolbox-field" draggable="true" data-field="editable-field"
-      style=" border-color: black; box-shadow: var(--focus-01); padding: 5px">
-      Text Field</div>
-    <div id="fontControls" style="visibility: hidden;">
-      <label for="dataField"> Data Field: </label>
-      <input type="text" id="dataField" value="dataField" style=" width: 99px">
-      <label for="innerText"> Inner Text: </label>
-      <input type="text" id="innerText" value="innerText" style=" width: 99px">
-      <br></br>
-      <label for="fontSize">Font Size:</label>
-      <input type="number" id="fontSize" value="12" min="6" max="48">
-      <label for="fontColor">Font Color:</label>
-      <input type="color" id="fontColor" value="#000000">
-      <br></br>
-      <label for="fontStyle">Font Style:</label>
-      <select id="fontStyle">
-        <option value="normal">Normal</option>
-        <option value="italic">Italic</option>
-      </select>
-
-      <select id="fontFamily" style=" width: 99px">
-        <option value="Arial">Arial</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Tahoma">Tahoma</option>
-        <option value="sans-serif">sans-serif</option>
-      </select>
-      <select id="fontWeight">
-        <option value="normal">Normal</option>
-        <option value="bold">Bold</option>
-        <option value="lighter">Lighter</option>
-      </select>
-
-
-    </div>
-  </div>
-  <div id="fields-container"></div>
   <!-- The Modal -->
   <div id="myModal" class="modal">
 
@@ -139,7 +72,6 @@
       efb.lastChild.setAttribute('class', 'font-control fa fa-edit');
       efb.lastChild.addEventListener('click', function (e) {
         efb = e.target.parentElement;
-        // TODO: make the tag see the parent element after the first time used for editing
         console.log(e.target);
         console.log(efb);
         openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
@@ -156,8 +88,7 @@
         mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
         mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
         mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
-        // todo: send changes to the pdf form field
-        // markfieldasdirty so that it can be saved
+
       });
 
       efb.style.fontSize = modal.querySelector('#fontSize').value + 'px';
@@ -208,6 +139,72 @@
     }
     var greg = null;
   </script>
+  <script src="scripts.js" type="module"></script>
+  <ul>
+    <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">
+      <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy">
+    </h1>
+  </ul>
+
+  <div id="selector">
+    <input type="file" id="pdf-file-input" accept=".pdf"> </input>
+    <button id="loadPdfBtn">Load PDF</button>
+    <button id="displayFieldsBtn">Show Fields</button>
+    <button id="editFormBtn">Save Form</button>
+    <button id="backBtn">
+      <i class="fa fa-arrow-up"></i>
+      Back
+    </button>
+    <button id="nextBtn">
+      Next
+      <i class="fa fa-arrow-down"></i>
+    </button>
+    <div id="pageIndex"></div>
+    <div id="totalPageIndex"></div>
+  </div>
+  <div id="pdf-container">
+    <div id="canvas"></div> <!-- Holds all editable-text-fields -->
+  </div>
+  <div id="toolbox">
+    Drag'n'Drop to add fields
+    <div id="toolbox-field" draggable="true" data-field="editable-field"
+      style=" border-color: black; box-shadow: var(--focus-01); padding: 5px">
+      Text Field</div>
+    <div id="fontControls" style="visibility: hidden;">
+      <label for="dataField"> Data Field: </label>
+      <input type="text" id="dataField" value="dataField" style=" width: 99px">
+      <label for="innerText"> Inner Text: </label>
+      <input type="text" id="innerText" value="innerText" style=" width: 99px">
+      <br></br>
+      <label for="fontSize">Font Size:</label>
+      <input type="number" id="fontSize" value="12" min="6" max="48">
+      <label for="fontColor">Font Color:</label>
+      <input type="color" id="fontColor" value="#000000">
+      <br></br>
+      <label for="fontStyle">Font Style:</label>
+      <select id="fontStyle">
+        <option value="normal">Normal</option>
+        <option value="italic">Italic</option>
+      </select>
+
+      <select id="fontFamily" style=" width: 99px">
+        <option value="Arial">Arial</option>
+        <option value="Courier New">Courier New</option>
+        <option value="Verdana">Verdana</option>
+        <option value="Times New Roman">Times New Roman</option>
+        <option value="Tahoma">Tahoma</option>
+        <option value="sans-serif">sans-serif</option>
+      </select>
+      <select id="fontWeight">
+        <option value="normal">Normal</option>
+        <option value="bold">Bold</option>
+        <option value="lighter">Lighter</option>
+      </select>
+
+
+    </div>
+  </div>
+  <div id="fields-container"></div>
 </body>
 
 </html>

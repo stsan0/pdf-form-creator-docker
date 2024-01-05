@@ -1,3 +1,4 @@
+import duplicateFieldChecker from './duplicateFieldChecker.js';
 // Create editable field
 export default async function createEditableField(rect, pageIndex, className, inner, scale = 2) {
     let x = rect.x;
@@ -7,8 +8,7 @@ export default async function createEditableField(rect, pageIndex, className, in
     const fieldText = document.createElement('div');
     //make sure its absolute
     fieldText.style.position = 'absolute';
-    const pageHeight = 1584;
-    const pageIndexOffset = pageIndex;
+    //const pageHeight = 1584;
     fieldText.setAttribute('data-page', pageIndex);
 
     fieldText.style.left = (x) * scale + 'px';
@@ -48,11 +48,12 @@ export default async function createEditableField(rect, pageIndex, className, in
 
     // add a datamember for the div, keep id as editable-field
     fieldText.id = 'editable-field';
-    if (className == 'editable-field' || !className) {
+    while (className == 'editable-field' || !className) {
         className = prompt("Prior name is " + className + ". Please enter a name for the field");
         console.log(className)
     }
     fieldText.setAttribute('data-field', className);
+    fieldText.setAttribute('data-oldfield', className); // this is the original name of the field
 
     // use the html font size, font color, font style values to update the editable-field's font properties
     const fontSize = document.getElementById('fontSize').value;
@@ -103,12 +104,8 @@ export default async function createEditableField(rect, pageIndex, className, in
 
             //console.log('width changed to ' + event.target.style.width);
         }
-        // Make the click function = to tag's click function 
-        //console.log(event.target.getElementsByClassName('span'))
         event.target.getElementsByClassName('span');
         console.log("clicking " + event.target.id);
-        // click the tag, which is a child of the editable-field
-        //tag.click();
     })
     fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();
@@ -175,22 +172,20 @@ pdfContainer.addEventListener('drop', function (event) {
         let height = 50;
         let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
         let y = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
-        let pageNumber = event.target.id.replace(/^[^\d]+/, "");
-        // remove the last bracket from the page number
-        pageNumber = pageNumber.replace(/\D+$/, "");
+        let pageNumber = document.getElementById("pageIndex").textContent - 1;
         // x, y, width, height, pageRectangle, pageNumber, name, value, scale
         const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ').then(function (editableField) {
+            duplicateFieldChecker(editableField);
             canvas.appendChild(editableField);
         });
-        return;
     }
-    if (lastDrag.id == 'editable-field') {
+    else if (lastDrag.id == 'editable-field') {
         let className = lastDrag.getAttribute('data-field');
         console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
         console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
         const offsetX = event.clientX - canvas.getBoundingClientRect().left;
         const offsetY = event.clientY - canvas.getBoundingClientRect().top;
-        const fieldName = lastDrag.text; // TODO: the vertical position is using top, not bottom.
+        const fieldName = lastDrag.text;
         lastDrag.style.left = offsetX + 'px';
         lastDrag.style.top = offsetY + 'px';
     }
@@ -217,6 +212,5 @@ pdfContainer.onmousemove = function (e) {
 pdfContainer.addEventListener('mouseup', function (event) {
     dragging = false;
     lastDrag = null;
-
 });
 

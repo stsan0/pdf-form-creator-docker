@@ -1,9 +1,10 @@
 import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
-import extractText from './extract_text.js';
-import createEditableField from './createEditableField.js';
-import displayFields from './displayFields.js';
-import editForm from './saveForm.js';
+import createEditableField from './usermod/createEditableField.js';
+import displayFields from './usermod/displayFields.js';
+import editForm from './usermod/saveForm.js';
+import FieldCRUD from './usermod/fieldClassCRUD.js';
+import duplicateFieldChecker from './usermod/duplicateFieldChecker.js';
 
 let pageIndexDiv = document.getElementById("pageIndex");
 let totalPageIndexDiv = document.getElementById("totalPageIndex");
@@ -18,10 +19,12 @@ let form = null;
 let fields = null;
 let pageItself = null;
 let pageIndex = null;
+const fieldCRUD = new FieldCRUD();
+const pdfContainer = document.getElementById('pdf-container');
+
 
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
-document.getElementById("showValuesBtn").addEventListener("click", showFieldValues);
-document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc) });
+document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
 document.getElementById("displayFieldsBtn").addEventListener("click", displayFields);
 document.getElementById("backBtn").addEventListener("click", backBtn);
 document.getElementById("nextBtn").addEventListener("click", nextBtn);
@@ -55,12 +58,11 @@ async function loadPdf() {
                     viewport: viewport
                 };
                 var renderTask = page.render(renderContext);
-                var pdfContainer = document.getElementById('pdf-container');
-                var firstChild = pdfContainer.firstChild; // Get the first child
+                var lastChild = pdfContainer.lastChild; // Get the first child
 
                 renderTask.promise.then(function () {
                     console.log('Page rendered');
-                    pdfContainer.insertBefore(pdfframe, firstChild.nextSibling); // Insert the child after the first child
+                    pdfContainer.insertBefore(pdfframe, lastChild.nextSibling); // Insert the child after the first child
                     renderPdfFields(pageNumber); // add editable fields on top of pdf 
                 });
             });
@@ -72,14 +74,13 @@ async function loadPdf() {
 function areYouSure() {
     // add a popup if canvas and pdf-container are not empty
     const canvas = document.getElementById('canvas');
-    const pdfContainer = document.getElementById('pdf-container');
     if (canvas.firstChild || pdfContainer.childElementCount > 1) {
         if (confirm("Changes will be lost if you press OK and replace the current PDF. Press Cancel to keep the current PDF.")) {
             while (canvas.firstChild) {
                 canvas.removeChild(canvas.firstChild);
             }
             for (let i = 0; i < pdfContainer.childElementCount; i++) {
-                const pdfframe = document.getElementById('pdfframe-[' + i + ']');
+                const pdfframe = document.getElementById('pdfframe');
                 if (pdfframe != null) {
                     pdfContainer.removeChild(pdfframe);
                 }
@@ -87,7 +88,7 @@ function areYouSure() {
             // reset pdfDoc
             pdfDoc = null;
             console.log("pdfDoc is " + pdfDoc)
-
+            fieldCRUD = new FieldCRUD();
         } else {
             throw new Error("Cancelled");
         }
@@ -130,7 +131,6 @@ function nextBtn() {
     }
 }
 
-
 function updatePageNumber() {
     pageIndexDiv.textContent = pageNumber + 1; // Adding 1 to display the page number starting from 1
     totalPageIndexDiv.textContent = totalPages;
@@ -144,7 +144,6 @@ function removeOldPage() {
         editableField.remove();
     });
 }
-
 
 async function updateToNewPage() {
     await pdfjsGlobal.getPage(pageNumber + 1).then(async function (page) {
@@ -161,12 +160,11 @@ async function updateToNewPage() {
             viewport: viewport
         };
         var renderTask = page.render(renderContext);
-        var pdfContainer = document.getElementById('pdf-container');
-        var firstChild = pdfContainer.firstChild; // Get the first child
+        var lastChild = pdfContainer.lastChild; // Get the first child
 
         renderTask.promise.then(function () {
             console.log('Page rendered');
-            pdfContainer.insertBefore(pdfframe, firstChild.nextSibling); // Insert the child after the first child
+            pdfContainer.insertBefore(pdfframe, lastChild.nextSibling); // Insert the child after the first child
             renderPdfFields(pageNumber); // add editable fields on top of pdf 
         });
     });
@@ -211,41 +209,115 @@ function createEF(field, form, pageNumber) {
             createEditableField(fieldRect, pageIndex, name, value, scale).then(function (editableField) {
                 duplicateFieldChecker(editableField);
                 canvas.appendChild(editableField);
+                const innerTextBlock = {
+                    text: editableField.innerText,
+                    fontSize: editableField.style.fontSize || null,
+                    fontColor: editableField.style.color || null,
+                    fontStyle: editableField.style.fontStyle || null,
+                    fontFamily: editableField.style.fontFamily || null
+                }
+                fieldCRUD.createField(name, innerTextBlock, fieldRect, pageIndex);
                 pageItself = null;
                 pageIndex = null;
-
             });
         }
     });
 }
 
-function duplicateFieldChecker(fieldNow, fieldCount = 0) {
-    const fields = document.querySelectorAll('#editable-field');
-    fields.forEach(field => {
-        if (field.getAttribute('data-field') === fieldNow.getAttribute('data-field')) {
-            console.log("duplicate field found: " + field.getAttribute('data-field'));
-            fieldCount++;
-            const originalField = fieldNow.getAttribute('data-field');
-            const fieldName = originalField.split('#')[0]; // Assuming the field name is separated by an  (#)
-            fieldNow.setAttribute('data-field', fieldName + '#' + fieldCount);
-            console.log("fieldCount: " + fieldCount);
-            duplicateFieldChecker(fieldNow, fieldCount);
-        }
-    });
-}
+document.querySelector(".modal-ok").addEventListener("click", function (e) {
+    //let modalContent = e.target.parentElement;
+    const efb = document.querySelector('.modal-body');
 
-async function showFieldValues() {
-    const fileInput = document.getElementById('pdf-file-input');
-    const file = fileInput.files[0];
-    if (file) {
-        const fieldsContainer = document.getElementById('fields-container');
-        let fieldValues = extractText(pdfDoc).then(function (fieldValues) {
-            //fieldsContainer.innerHTML = (fieldValues);
-            for (const [key, value] of Object.entries(fieldValues)) {
-                //console.log(`${key}: ${value}`);
-                fieldsContainer.innerHTML += (`${key}: ${value}` + "<br>");
-            }
-        }
-        );
+    let read = fieldCRUD.readField(efb.querySelector('#dataField').value);
+    console.log("setting text to: " + efb.querySelector('#innerText').value + " on the page " + pageNumber);
+    let innerTextBlock = {
+        text: efb.querySelector('#innerText').value,
+        fontSize: efb.querySelector('#fontSize').value || null,
+        fontColor: efb.querySelector('#fontColor').value || null,
+        fontStyle: efb.querySelector('#fontStyle').value || null,
+        fontFamily: efb.querySelector('#fontFamily').value.replace(/"/g, '') || null,
+        fontWeight: efb.querySelector('#fontWeight').value || null
     }
-}
+    let fieldRect = fieldCRUD.getAcrofieldWidgets(efb.querySelector('#dataField').value);
+    fieldCRUD.updateField(efb.querySelector('#dataField').value,
+        innerTextBlock,
+        fieldRect,
+        pageNumber);
+    // console.log type of efb.getAttribute('data-field')
+    console.log(typeof efb.querySelector('#dataField').value);
+    // markfieldasdirty
+    console.log("marking field as dirty: " + form.getFieldMaybe(efb.querySelector('#dataField').value));
+    let fieldDirty = form.getFieldMaybe(efb.querySelector('#dataField').value)
+    if (fieldDirty == undefined) {
+        console.log("fieldDirty is " + fieldDirty + " trying to get fieldOldTitle");
+        fieldDirty = form.getFieldMaybe(fieldCRUD.getfieldOldTitle(efb.querySelector('#dataField').value));
+        console.log("old fieldDirty is " + fieldDirty);
+    }
+
+    if (fieldDirty != undefined) {
+        form.markFieldAsDirty(fieldDirty.ref);
+        console.log("Dirt marked: " + fieldDirty.ref);
+    } else {
+        // the field must be saved to the form first. next OK we can set it as dirty
+        console.log("saving field " + efb.querySelector('#dataField').value);
+        let newField = form.createTextField(efb.querySelector('#dataField').value)
+        if (efb.querySelector('#innerText').value != ' ') {
+            newField.setText(efb.querySelector('#innerText').value);
+        }
+        const textPosition = {
+            x: parseInt(fieldRect.x) * (1 / scale),
+            y: parseInt(fieldRect.y) * (1 / scale),
+            width: parseInt(fieldRect.width) * (1 / scale),
+            height: parseInt(fieldRect.height) * (1 / scale),
+            textColor: (innerTextBlock.color),
+            //font: innerTextBlock.fontFamily TODO: error here because of pdfDoc embedfont
+        }
+        let page = pdfDoc.getPage(pageNumber)
+        newField.addToPage(page, textPosition);
+        console.log("new field added to page " + fieldCRUD.getPageIndex(efb.querySelector('#dataField').value));
+    }
+});
+
+pdfContainer.addEventListener('drop', function (event) {
+    event.preventDefault();
+    let editableField = canvas.lastChild;
+
+    let innerTextBlock = {
+        text: editableField.innerText,
+        fontSize: editableField.style.fontSize || null,
+        fontColor: editableField.style.color || null,
+        fontStyle: editableField.style.fontStyle || null,
+        fontFamily: editableField.style.fontFamily || null
+    }
+    let fieldRect = {
+        x: editableField.style.left,
+        y: editableField.style.bottom,
+        width: editableField.style.width,
+        height: editableField.style.height
+    }
+    let pageNumber = editableField.getAttribute('data-page');
+    console.log("adding droppable field to fieldCRUD");
+    fieldCRUD.createField(editableField.getAttribute('data-field'), innerTextBlock, fieldRect, pageNumber);
+});
+
+// Add event listener for when mouse button is released
+pdfContainer.addEventListener('mouseup', function (event) {
+    let efb = event.target;
+    if (efb.id != 'editable-field') {
+        efb = efb.parentElement;
+        if (efb.id != 'editable-field') {
+            efb = null;
+            return;
+        }
+    }
+    console.log("mouseup: " + efb.id)
+    let fieldRect = {
+        x: parseInt(efb.style.left),
+        y: parseInt(efb.style.bottom),
+        width: parseInt(efb.style.width),
+        height: parseInt(efb.style.height)
+    }
+    fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
+    // markfieldasdirty
+
+});
