@@ -17,8 +17,6 @@ pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.
 const scale = 2;
 let form = null;
 let fields = null;
-let pageItself = null;
-let pageIndex = null;
 const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
 
@@ -173,8 +171,6 @@ async function updateToNewPage() {
 
 function createEF(field, form, pageNumber) {
     let name = field.getName();
-    pageItself = null;
-    pageIndex = null;
     const widgets = field.acroField.getWidgets();
     widgets.forEach((widget) => {
         let value;
@@ -202,8 +198,8 @@ function createEF(field, form, pageNumber) {
                 return;
         }
         const fieldRect = widget.getRectangle();
-        pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
-        pageIndex = pdfDoc.getPages().findIndex((p) => p.ref == widget.P());
+        //const pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
+        const pageIndex = pdfDoc.getPages().findIndex((p) => p.ref == widget.P());
         //console.log(name + "'s page number: " + pageIndex);
         if (pageNumber === pageIndex) {
             createEditableField(fieldRect, pageIndex, name, value, scale).then(function (editableField) {
@@ -217,8 +213,6 @@ function createEF(field, form, pageNumber) {
                     fontFamily: editableField.style.fontFamily || null
                 }
                 fieldCRUD.createField(name, innerTextBlock, fieldRect, pageIndex);
-                pageItself = null;
-                pageIndex = null;
             });
         }
     });
@@ -227,8 +221,19 @@ function createEF(field, form, pageNumber) {
 document.querySelector(".modal-ok").addEventListener("click", function (e) {
     //let modalContent = e.target.parentElement;
     const efb = document.querySelector('.modal-body');
-
-    let read = fieldCRUD.readField(efb.querySelector('#dataField').value);
+    // get the editable field div with a query selector using the modal's data-field attribute
+    // to match with the editable field's data-field attribute
+    const modalDataField = efb.querySelector('#dataField').value;
+    const editableFieldDiv = document.querySelector(`[data-field="${modalDataField}"]`);
+    const oldField = editableFieldDiv.getAttribute('data-oldfield');
+    console.log(oldField);
+    let read = fieldCRUD.readField(modalDataField);
+    console.log(read);
+    if (read == undefined) {
+        read = fieldCRUD.findFieldByOldTitle(oldField);
+        console.log("field not found, using old title " + oldField + " instead");
+        console.log(read);
+    }
     console.log("setting text to: " + efb.querySelector('#innerText').value + " on the page " + pageNumber);
     let innerTextBlock = {
         text: efb.querySelector('#innerText').value,
@@ -238,20 +243,20 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         fontFamily: efb.querySelector('#fontFamily').value.replace(/"/g, '') || null,
         fontWeight: efb.querySelector('#fontWeight').value || null
     }
-    let fieldRect = fieldCRUD.getAcrofieldWidgets(efb.querySelector('#dataField').value);
-    fieldCRUD.updateField(efb.querySelector('#dataField').value,
+    let fieldRect = fieldCRUD.getAcrofieldWidgets(modalDataField);
+    fieldCRUD.updateField(modalDataField,
         innerTextBlock,
         fieldRect,
         pageNumber);
     // console.log type of efb.getAttribute('data-field')
-    console.log(typeof efb.querySelector('#dataField').value);
     // markfieldasdirty
-    console.log("marking field as dirty: " + form.getFieldMaybe(efb.querySelector('#dataField').value));
-    let fieldDirty = form.getFieldMaybe(efb.querySelector('#dataField').value)
+    console.log("marking field as dirty: " + form.getFieldMaybe(modalDataField));
+    let fieldDirty = form.getFieldMaybe(modalDataField)
     if (fieldDirty == undefined) {
-        console.log("fieldDirty is " + fieldDirty + " trying to get fieldOldTitle");
-        fieldDirty = form.getFieldMaybe(fieldCRUD.getfieldOldTitle(efb.querySelector('#dataField').value));
-        console.log("old fieldDirty is " + fieldDirty);
+        fieldCRUD.setNewTitle(oldField, modalDataField);
+        console.log("Let's try old title:  "  + fieldCRUD.getfieldOldTitle(oldField)+  " is the old title of " + fieldCRUD.findFieldByOldTitle(oldField));
+        fieldDirty = form.getFieldMaybe(fieldCRUD.getfieldOldTitle(oldField));
+        console.log(fieldDirty);
     }
 
     if (fieldDirty != undefined) {
@@ -259,8 +264,8 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         console.log("Dirt marked: " + fieldDirty.ref);
     } else {
         // the field must be saved to the form first. next OK we can set it as dirty
-        console.log("saving field " + efb.querySelector('#dataField').value);
-        let newField = form.createTextField(efb.querySelector('#dataField').value)
+        console.log("saving field " + modalDataField);
+        let newField = form.createTextField(modalDataField)
         if (efb.querySelector('#innerText').value != ' ') {
             newField.setText(efb.querySelector('#innerText').value);
         }
@@ -274,14 +279,14 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         }
         let page = pdfDoc.getPage(pageNumber)
         newField.addToPage(page, textPosition);
-        console.log("new field added to page " + fieldCRUD.getPageIndex(efb.querySelector('#dataField').value));
+        console.log("new field added to page " + fieldCRUD.getPageIndex(modalDataField));
     }
 });
 
 pdfContainer.addEventListener('drop', function (event) {
     event.preventDefault();
     let editableField = canvas.lastChild;
-
+ 
     let innerTextBlock = {
         text: editableField.innerText,
         fontSize: editableField.style.fontSize || null,
@@ -318,6 +323,7 @@ pdfContainer.addEventListener('mouseup', function (event) {
         height: parseInt(efb.style.height)
     }
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
+    form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
     // markfieldasdirty
 
 });

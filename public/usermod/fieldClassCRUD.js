@@ -17,7 +17,8 @@ export default class FieldCRUD {
             },
             acrofieldWidgets,
             pageIndex,
-            fieldOldTitle: title
+            fieldOldTitle: title,
+            newTitle: null
         };
     }
 
@@ -85,6 +86,29 @@ export default class FieldCRUD {
     getfieldOldTitle(fieldTitle) {
         const field = this.fields[fieldTitle];
         return field.fieldOldTitle;
+    }
+
+    // find field by old title
+    findFieldByOldTitle(fieldOldTitle) {
+        for (const fieldTitle in this.fields) {
+            if (this.fields[fieldTitle].fieldOldTitle === fieldOldTitle) {
+                return this.fields[fieldTitle].fieldTitle;
+            }
+        }
+        return undefined;
+    }
+
+    // setter and getter for newTitle
+    setNewTitle(fieldTitle, newTitle) {
+        const field = this.fields[fieldTitle];
+        if (field) {
+            field.newTitle = newTitle;
+        }
+    }
+
+    getNewTitle(fieldTitle) {
+        const field = this.fields[fieldTitle];
+        return field ? field.newTitle : undefined;
     }
 
     // Getter for inner text's font size
