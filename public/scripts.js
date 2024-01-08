@@ -1,4 +1,4 @@
-import { PDFDocument } from 'https://cdn.skypack.dev/pdf-lib';
+import { PDFDocument, PDFName, PDFRef } from 'https://cdn.skypack.dev/pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 import createEditableField from './usermod/createEditableField.js';
 import displayFields from './usermod/displayFields.js';
@@ -86,7 +86,9 @@ function areYouSure() {
             // reset pdfDoc
             pdfDoc = null;
             console.log("pdfDoc is " + pdfDoc)
-            fieldCRUD = new FieldCRUD();
+            // clear all fields in fieldCRUD
+            fieldCRUD.clearFields();
+
         } else {
             throw new Error("Cancelled");
         }
@@ -199,11 +201,16 @@ function createEF(field, form, pageNumber) {
         }
         const fieldRect = widget.getRectangle();
         //const pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
-        const pageIndex = pdfDoc.getPages().findIndex((p) => p.ref == widget.P());
+
+        const pageIndex = pdfDoc.getPages().findIndex((p) => widget.P() == p.ref);
+        if (pageIndex == null) {
+            // TODO: do something
+        }
+
         //console.log(name + "'s page number: " + pageIndex);
         if (pageNumber === pageIndex) {
             createEditableField(fieldRect, pageIndex, name, value, scale).then(function (editableField) {
-                duplicateFieldChecker(editableField);
+                const widgetCount = duplicateFieldChecker(editableField);
                 canvas.appendChild(editableField);
                 const innerTextBlock = {
                     text: editableField.innerText,
@@ -213,6 +220,9 @@ function createEF(field, form, pageNumber) {
                     fontFamily: editableField.style.fontFamily || null
                 }
                 fieldCRUD.createField(name, innerTextBlock, fieldRect, pageIndex);
+                fieldCRUD.setWidgetCount(name, widgetCount);
+                console.log(fieldCRUD.readField(name));
+
             });
         }
     });
@@ -254,7 +264,7 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     let fieldDirty = form.getFieldMaybe(modalDataField)
     if (fieldDirty == undefined) {
         fieldCRUD.setNewTitle(oldField, modalDataField);
-        console.log("Let's try old title:  "  + fieldCRUD.getfieldOldTitle(oldField)+  " is the old title of " + fieldCRUD.findFieldByOldTitle(oldField));
+        console.log("Let's try old title:  " + fieldCRUD.getfieldOldTitle(oldField) + " is the old title of " + fieldCRUD.findFieldByOldTitle(oldField));
         fieldDirty = form.getFieldMaybe(fieldCRUD.getfieldOldTitle(oldField));
         console.log(fieldDirty);
     }
@@ -286,7 +296,7 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
 pdfContainer.addEventListener('drop', function (event) {
     event.preventDefault();
     let editableField = canvas.lastChild;
- 
+
     let innerTextBlock = {
         text: editableField.innerText,
         fontSize: editableField.style.fontSize || null,
@@ -303,6 +313,7 @@ pdfContainer.addEventListener('drop', function (event) {
     let pageNumber = editableField.getAttribute('data-page');
     console.log("adding droppable field to fieldCRUD");
     fieldCRUD.createField(editableField.getAttribute('data-field'), innerTextBlock, fieldRect, pageNumber);
+
 });
 
 // Add event listener for when mouse button is released
@@ -316,14 +327,43 @@ pdfContainer.addEventListener('mouseup', function (event) {
         }
     }
     console.log("mouseup: " + efb.id)
-    let fieldRect = {
-        x: parseInt(efb.style.left),
-        y: parseInt(efb.style.bottom),
-        width: parseInt(efb.style.width),
-        height: parseInt(efb.style.height)
+    let fieldRect = null;
+    if (parseInt(efb.style.top) > 0) {
+        fieldRect = {
+            x: parseInt(efb.style.left),
+            y: Math.abs(parseInt(efb.style.top) - parseInt(efb.style.bottom)),
+            width: parseInt(efb.style.width),
+            height: parseInt(efb.style.height)
+        }
+        console.log("top" + efb.style.top)
+    }
+    else {
+        fieldRect = {
+            x: parseInt(efb.style.left),
+            y: parseInt(efb.style.bottom),
+            width: parseInt(efb.style.width),
+            height: parseInt(efb.style.height)
+        }
+        console.log("bottom is" + efb.style.bottom)
     }
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
+    let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
+    if (textField) {
+        // remove the textField from the page, then add it back with the new position
+        let widget = textField.acroField.getWidgets()[0];
+        const AP = widget.ensureAP();
+        AP.set(PDFName.of('N'), PDFRef.of(0, 0));
+        form.removeField(textField);
+    }
+    const nextField = form.createTextField(efb.getAttribute('data-field'));
+    nextField.setText(efb.innerText);
+    nextField.addToPage(pdfDoc.getPage(pageNumber), {
+        x: parseInt(fieldRect.x) * (1 / scale),
+        y: parseInt(fieldRect.y) * (1 / scale),
+        width: parseInt(fieldRect.width) * (1 / scale),
+        height: parseInt(fieldRect.height) * (1 / scale),
+    });
+
     form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
-    // markfieldasdirty
 
 });

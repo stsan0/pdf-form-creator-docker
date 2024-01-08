@@ -18,8 +18,13 @@ export default class FieldCRUD {
             acrofieldWidgets,
             pageIndex,
             fieldOldTitle: title,
-            newTitle: null
+            newTitle: null,
+            widgetCount: 0
         };
+    }
+
+    clearFields() {
+        this.fields = {};
     }
 
     readField(fieldTitle) {
@@ -109,6 +114,20 @@ export default class FieldCRUD {
     getNewTitle(fieldTitle) {
         const field = this.fields[fieldTitle];
         return field ? field.newTitle : undefined;
+    }
+
+    // setter for widgetCount
+    setWidgetCount(fieldTitle, widgetCount) {
+        const field = this.fields[fieldTitle];
+        if (field) {
+            field.widgetCount = widgetCount;
+        }
+    }
+
+    // getter for widgetCount
+    getWidgetCount(fieldTitle) {
+        const field = this.fields[fieldTitle];
+        return field ? field.widgetCount : undefined;
     }
 
     // Getter for inner text's font size
