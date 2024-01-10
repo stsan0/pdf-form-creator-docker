@@ -1,4 +1,4 @@
-import { PDFDocument, PDFName, PDFRef } from 'https://cdn.skypack.dev/pdf-lib';
+import { PDFDocument, PDFName, PDFRef, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 import createEditableField from './usermod/createEditableField.js';
 import displayFields from './usermod/displayFields.js';
@@ -19,7 +19,6 @@ let form = null;
 let fields = null;
 const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
-
 
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
 document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
@@ -202,8 +201,8 @@ function createEF(field, form, pageNumber) {
         const fieldRect = widget.getRectangle();
         //const pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
 
-        const pageIndex = pdfDoc.getPages().findIndex((p) => widget.P() == p.ref);
-        if (pageIndex == null) {
+        let pageIndex = pdfDoc.getPages().findIndex((p) => p.ref === widget.P());
+        if (pageIndex == -1) {
             // TODO: do something
         }
 
@@ -275,7 +274,7 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     } else {
         // the field must be saved to the form first. next OK we can set it as dirty
         console.log("saving field " + modalDataField);
-        let newField = form.createTextField(modalDataField)
+        //let newField = form.createTextField(modalDataField)
         if (efb.querySelector('#innerText').value != ' ') {
             newField.setText(efb.querySelector('#innerText').value);
         }
@@ -287,9 +286,9 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
             textColor: (innerTextBlock.color),
             //font: innerTextBlock.fontFamily TODO: error here because of pdfDoc embedfont
         }
-        let page = pdfDoc.getPage(pageNumber)
-        newField.addToPage(page, textPosition);
-        console.log("new field added to page " + fieldCRUD.getPageIndex(modalDataField));
+        //let page = pdfDoc.getPage(pageNumber)
+        // newField.addToPage(page, textPosition);
+        //console.log("new field added to page " + fieldCRUD.getPageIndex(modalDataField));
     }
 });
 
@@ -313,7 +312,20 @@ pdfContainer.addEventListener('drop', function (event) {
     let pageNumber = editableField.getAttribute('data-page');
     console.log("adding droppable field to fieldCRUD");
     fieldCRUD.createField(editableField.getAttribute('data-field'), innerTextBlock, fieldRect, pageNumber);
-
+    // since the field is not in the form, add it to the form
+    let newField = form.createTextField(editableField.getAttribute('data-field'))
+    if (editableField.innerText != ' ') {
+        newField.setText(editableField.innerText);
+    }
+    const textPosition = {
+        x: parseInt(fieldRect.x) * (1 / scale),
+        y: parseInt(fieldRect.y) * (1 / scale),
+        width: parseInt(fieldRect.width) * (1 / scale),
+        height: parseInt(fieldRect.height) * (1 / scale),
+    }
+    let page = pdfDoc.getPage(parseInt(pageNumber))
+    newField.addToPage(page, textPosition);
+    form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
 });
 
 // Add event listener for when mouse button is released
@@ -349,20 +361,10 @@ pdfContainer.addEventListener('mouseup', function (event) {
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
     let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
     if (textField) {
-        // remove the textField from the page, then add it back with the new position
-        let widget = textField.acroField.getWidgets()[0];
-        const AP = widget.ensureAP();
-        AP.set(PDFName.of('N'), PDFRef.of(0, 0));
-        form.removeField(textField);
+        let wc = efb.getAttribute('data-widgetcount');
+        let widgets = textField.acroField.getWidgets()
+        widgets[wc].setRectangle(fieldRect);
     }
-    const nextField = form.createTextField(efb.getAttribute('data-field'));
-    nextField.setText(efb.innerText);
-    nextField.addToPage(pdfDoc.getPage(pageNumber), {
-        x: parseInt(fieldRect.x) * (1 / scale),
-        y: parseInt(fieldRect.y) * (1 / scale),
-        width: parseInt(fieldRect.width) * (1 / scale),
-        height: parseInt(fieldRect.height) * (1 / scale),
-    });
 
     form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
 

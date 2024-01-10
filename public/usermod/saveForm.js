@@ -1,6 +1,7 @@
 import { StandardFonts, PDFName, PDFRef } from 'https://cdn.skypack.dev/pdf-lib';
 const scale = 2;
 export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
+    const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)
     if (!pdfDoc) return;
     // Check all fields to see if they are marked as dirty
     const fields = form.getFields();
@@ -18,18 +19,8 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     newField = fieldCRUD.readField(fieldName);
                     console.log("match found for " + fieldName)
                 }
-                // Create replacement fields for removed fields
-                // Create a replacement field in its place
-                console.log(field);
 
-                const AP = widget.ensureAP();
-                AP.set(PDFName.of('N'), PDFRef.of(0, 0));
-                // Remove the field from the form
-                form.removeField(field);
-
-                //console.log("removed field " + fieldName)
                 console.log(newField)
-                let page = pdfDoc.getPage(parseInt(fieldCRUD.getPageIndex(newField.fieldTitle)));
                 let fieldRect = fieldCRUD.getAcrofieldWidgets(newField.fieldTitle);
                 console.log(fieldRect);
                 //let color = hexToRGB(fieldCRUD.getFontColor(newField.fieldTitle)); //TODO: error here because of pdfDoc embedfont
@@ -41,31 +32,18 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     y: parseInt(fieldRect.y) * (1 / scale),
                     width: parseInt(fieldRect.width) * (1 / scale),
                     height: parseInt(fieldRect.height) * (1 / scale),
-                    //textColor: color,
-
                 }
-                if (fieldCRUD.getFieldInnerText(newField.fieldTitle) == 'true' || fieldCRUD.getFieldInnerText(newField.fieldTitle) == 'false') {
-                    let newCheckBox = null;
-                    if (newField.newTitle != undefined) {
-                        newCheckBox = form.createCheckBox(newField.newTitle)
-                    } else {
-                        newCheckBox = form.createCheckBox(fieldName)
-                    }
-
-                    if (fieldCRUD.getFieldInnerText(newField) == 'true') {
-                        newCheckBox.check();
-                    }
-                    newCheckBox.addToPage(page, textPosition)
-                } else {
-                    let replacementField = null;
-                    if (newField.newTitle != undefined) {
-                        replacementField = form.createTextField(newField.newTitle);
-                    } else {
-                        replacementField = form.createTextField(newField.fieldTitle);
-                    }
-                    replacementField.setText(fieldCRUD.getFieldInnerText(newField.fieldTitle).text);
-                    replacementField.addToPage(page, textPosition);
+                widget.setRectangle(textPosition);
+                // if text != , setText
+                if (newField.fieldInnerText.text != "") {
+                    field.setText(fieldCRUD.getFieldInnerText(newField.fieldTitle).text); // todo: make sure this works
+                    //field.setFontSize(fieldCRUD.getFontSize(newField.fieldTitle));
+                    //field.setTextColor(fieldCRUD.getFontColor(newField.fieldTitle));
+                    //field.setFont(fieldCRUD.getFontFamily(newField.fieldTitle)); // weight, style need to be added
+                    //field.updateAppearances();
                 }
+                // updatefieldappearances
+                field.updateAppearances(helvetica);
             }
         });
     });
