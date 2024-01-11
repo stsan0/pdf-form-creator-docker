@@ -5,6 +5,7 @@ import displayFields from './usermod/displayFields.js';
 import editForm from './usermod/saveForm.js';
 import FieldCRUD from './usermod/fieldClassCRUD.js';
 import duplicateFieldChecker from './usermod/duplicateFieldChecker.js';
+import pageIndexFinder from './usermod/pageIndexFinder.js';
 
 let pageIndexDiv = document.getElementById("pageIndex");
 let totalPageIndexDiv = document.getElementById("totalPageIndex");
@@ -84,7 +85,6 @@ function areYouSure() {
             }
             // reset pdfDoc
             pdfDoc = null;
-            console.log("pdfDoc is " + pdfDoc)
             // clear all fields in fieldCRUD
             fieldCRUD.clearFields();
 
@@ -201,9 +201,10 @@ function createEF(field, form, pageNumber) {
         const fieldRect = widget.getRectangle();
         //const pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
 
-        let pageIndex = pdfDoc.getPages().findIndex((p) => p.ref === widget.P());
+        let pageIndex = pageIndexFinder(pdfDoc, widget.P());
         if (pageIndex == -1) {
             // TODO: do something
+            console.log("page not found");
         }
 
         //console.log(name + "'s page number: " + pageIndex);
@@ -220,7 +221,7 @@ function createEF(field, form, pageNumber) {
                 }
                 fieldCRUD.createField(name, innerTextBlock, fieldRect, pageIndex);
                 fieldCRUD.setWidgetCount(name, widgetCount);
-                console.log(fieldCRUD.readField(name));
+                //console.log(fieldCRUD.readField(name));
 
             });
         }
