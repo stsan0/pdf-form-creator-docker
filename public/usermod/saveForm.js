@@ -14,7 +14,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                 let newField = null;
                 // Check if the field's name matches any fieldCRUD fieldTitles
 
-                if (fieldCRUD.readField(fieldName) != undefined || fieldName === fieldCRUD.findFieldByOldTitle(fieldName)) {
+                if (fieldCRUD.readField(fieldName) != undefined) {
                     matchFound = true;
                     newField = fieldCRUD.readField(fieldName);
                     console.log("match found for " + fieldName)
@@ -35,13 +35,12 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                 }
                 widget.setRectangle(textPosition);
                 // if text != , setText
-                if (newField.fieldInnerText.text != "") {
-                    field.setText(fieldCRUD.getFieldInnerText(newField.fieldTitle).text); // todo: make sure this works
-                    //field.setFontSize(fieldCRUD.getFontSize(newField.fieldTitle));
-                    //field.setTextColor(fieldCRUD.getFontColor(newField.fieldTitle));
-                    //field.setFont(fieldCRUD.getFontFamily(newField.fieldTitle)); // weight, style need to be added
-                    //field.updateAppearances();
-                }
+                field.setText(newField.fieldInnerText.text); // todo: make sure this works
+                field.setFontSize(parseInt(newField.fieldInnerText.fontSize));
+                //field.setcolor(newField.fieldInnerText.fontColor);
+                //field.setFont(fieldCRUD.getFontFamily(newField.fieldTitle)); // weight, style need to be added
+                //field.updateAppearances();
+
                 // updatefieldappearances
                 field.updateAppearances(helvetica);
             }

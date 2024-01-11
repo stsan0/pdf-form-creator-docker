@@ -184,7 +184,7 @@ pdfContainer.addEventListener('drop', function (event) {
         console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
         console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
         const offsetX = event.clientX - canvas.getBoundingClientRect().left;
-        const offsetY = canvas.getBoundingClientRect().bottom - event.clientY ;
+        const offsetY = canvas.getBoundingClientRect().bottom - event.clientY;
         const fieldName = lastDrag.text;
         lastDrag.style.left = offsetX + 'px';
         lastDrag.style.bottom = offsetY + 'px';
@@ -202,7 +202,7 @@ pdfContainer.onmousemove = function (e) {
     if (dragging == false) return;
     e.preventDefault();
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
-    let pos2 = (canvas.getBoundingClientRect().bottom - e.clientY - startY);    
+    let pos2 = Math.max((e.clientY - startY), 0);
     lastDrag.style.left = pos1 + 'px';
     lastDrag.style.bottom = pos2 + 'px';
 }
