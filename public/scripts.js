@@ -82,9 +82,7 @@ function areYouSure() {
                 if (pdfframe != null) {
                     pdfContainer.removeChild(pdfframe);
                 }
-            }
-            // reset pdfDoc
-            pdfDoc = null;
+            } 
             // clear all fields in fieldCRUD
             fieldCRUD.clearFields();
 
@@ -340,25 +338,13 @@ pdfContainer.addEventListener('mouseup', function (event) {
         }
     }
     console.log("mouseup: " + efb.id)
-    let fieldRect = null;
-    if (parseInt(efb.style.top) > 0) {
-        fieldRect = {
-            x: parseInt(efb.style.left),
-            y: Math.abs(parseInt(efb.style.top) - parseInt(efb.style.bottom)),
-            width: parseInt(efb.style.width),
-            height: parseInt(efb.style.height)
-        }
-        console.log("top" + efb.style.top)
-    }
-    else {
-        fieldRect = {
+    let fieldRect = {
             x: parseInt(efb.style.left),
             y: parseInt(efb.style.bottom),
             width: parseInt(efb.style.width),
             height: parseInt(efb.style.height)
         }
         console.log("bottom is" + efb.style.bottom)
-    }
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
     let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
     if (textField) {

@@ -184,10 +184,10 @@ pdfContainer.addEventListener('drop', function (event) {
         console.log("dropping : " + className + " on " + lastDrag.parentElement.parentElement.id)
         console.log("Dimensions: " + lastDrag.style.width + " " + lastDrag.style.height)
         const offsetX = event.clientX - canvas.getBoundingClientRect().left;
-        const offsetY = event.clientY - canvas.getBoundingClientRect().top;
+        const offsetY = canvas.getBoundingClientRect().bottom - event.clientY ;
         const fieldName = lastDrag.text;
         lastDrag.style.left = offsetX + 'px';
-        lastDrag.style.top = offsetY + 'px';
+        lastDrag.style.bottom = offsetY + 'px';
     }
     lastDrag = null;
 });
@@ -202,10 +202,9 @@ pdfContainer.onmousemove = function (e) {
     if (dragging == false) return;
     e.preventDefault();
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
-    let pos2 = e.clientY - startY - canvas.getBoundingClientRect().top;
-    //console.log("moving " + lastDrag.id + " to " + pos1 + " " + pos2)
+    let pos2 = (canvas.getBoundingClientRect().bottom - e.clientY - startY);    
     lastDrag.style.left = pos1 + 'px';
-    lastDrag.style.top = pos2 + 'px';
+    lastDrag.style.bottom = pos2 + 'px';
 }
 
 // Add event listener for when mouse button is released
