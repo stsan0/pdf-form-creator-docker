@@ -7,7 +7,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
     const fields = form.getFields();
     fields.forEach(field => {
         const widgets = field.acroField.getWidgets();
-        widgets.forEach(widget => {
+        widgets.forEach((widget,index) => {
             if (form.fieldIsDirty(field.ref)) {
                 const fieldName = field.getName();
                 let matchFound = false;
@@ -23,9 +23,9 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                 console.log(newField)
                 let fieldRect = fieldCRUD.getAcrofieldWidgets(newField.fieldTitle);
                 console.log(fieldRect);
-                //let color = hexToRGB(fieldCRUD.getFontColor(newField.fieldTitle)); //TODO: error here because of pdfDoc embedfont
+                let color = hexToRGB(fieldCRUD.getFontColor(newField.fieldTitle)); //TODO: error here because of pdfDoc embedfont
                 //let font = fieldCRUD.getFontFamily(newField)
-                //let size = parseInt(fieldCRUD.getFontSize(newField.fieldTitle));
+                let size = parseInt(fieldCRUD.getFontSize(newField.fieldTitle));
 
                 const textPosition = {
                     x: parseInt(fieldRect.x) * (1 / scale),
@@ -34,16 +34,40 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     height: parseInt(fieldRect.height) * (1 / scale),
                 }
                 widget.setRectangle(textPosition);
-                // if text != , setText
-                if (newField.fieldInnerText.text != "") {
-                    field.setText(fieldCRUD.getFieldInnerText(newField.fieldTitle).text); // todo: make sure this works
-                    //field.setFontSize(fieldCRUD.getFontSize(newField.fieldTitle));
-                    //field.setTextColor(fieldCRUD.getFontColor(newField.fieldTitle));
-                    //field.setFont(fieldCRUD.getFontFamily(newField.fieldTitle)); // weight, style need to be added
-                    //field.updateAppearances();
+                let newPdfField;
+            if (field instanceof PDFTextField) {
+                newPdfField = form.createTextField('newFieldName' + index);
+                newPdfField.setText(field.getText());
+            } else if (field instanceof PDFCheckBox) {
+                newPdfField = form.createCheckBox('newFieldName' + index);
+                if (field.isChecked()) {
+                    newPdfField.check();
+                } else {
+                    newPdfField.uncheck();
                 }
-                // updatefieldappearances
-                field.updateAppearances(helvetica);
+            }
+
+            newPdfField.addToPage(newField.fieldInnerText.text,newField.pageIndex,
+                {
+                    x: textPosition.x,
+                    y: textPosition.y,
+                    width: textPosition.width,
+                    height: textPosition.height,
+                    textColor: color,
+                    font: helvetica, // will change this later
+                })
+            newPdfField.setFontSize(size);
+
+            // Set the position and size of the new field to match the widget
+            newPdfField.acroField.setRectangle(widget.getRectangle());
+
+            // Set other properties of the new field to match the old field
+            // ... add code here ...
+
+            // Remove the old field from the form
+            if (index === 0) {
+            form.removeField(field);
+            }
             }
         });
     });
