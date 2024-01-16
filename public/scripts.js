@@ -82,7 +82,7 @@ function areYouSure() {
                 if (pdfframe != null) {
                     pdfContainer.removeChild(pdfframe);
                 }
-            } 
+            }
             // clear all fields in fieldCRUD
             fieldCRUD.clearFields();
 
@@ -234,7 +234,7 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     const modalDataField = efb.querySelector('#dataField').value;
     const editableFieldDiv = document.querySelector(`[data-field="${modalDataField}"]`);
     const oldField = editableFieldDiv.getAttribute('data-oldfield');
-    console.log(oldField);
+    const newTitle = editableFieldDiv.getAttribute('data-newtitle');
     let read = fieldCRUD.readField(modalDataField);
     console.log(read);
     if (read == undefined) {
@@ -260,11 +260,9 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     // markfieldasdirty
     console.log("marking field as dirty: " + form.getFieldMaybe(modalDataField));
     let fieldDirty = form.getFieldMaybe(modalDataField)
-    if (fieldDirty == undefined) {
-        fieldCRUD.setNewTitle(oldField, modalDataField);
-        console.log("Let's try old title:  " + fieldCRUD.getfieldOldTitle(oldField) + " is the old title of " + fieldCRUD.findFieldByOldTitle(oldField));
-        fieldDirty = form.getFieldMaybe(fieldCRUD.getfieldOldTitle(oldField));
-        console.log(fieldDirty);
+    if (newTitle) {
+        fieldCRUD.setNewTitle(modalDataField, newTitle);
+        console.log(fieldDirty + " should be named " + newTitle);
     }
 
     if (fieldDirty != undefined) {
@@ -339,12 +337,12 @@ pdfContainer.addEventListener('mouseup', function (event) {
     }
     console.log("mouseup: " + efb.id)
     let fieldRect = {
-            x: parseInt(efb.style.left),
-            y: parseInt(efb.style.bottom),
-            width: parseInt(efb.style.width),
-            height: parseInt(efb.style.height)
-        }
-        console.log("bottom is" + efb.style.bottom)
+        x: parseInt(efb.style.left),
+        y: parseInt(efb.style.bottom),
+        width: parseInt(efb.style.width),
+        height: parseInt(efb.style.height)
+    }
+    console.log("bottom is" + efb.style.bottom)
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
     let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
     if (textField) {

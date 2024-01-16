@@ -14,7 +14,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                 let newField = null;
                 // Check if the field's name matches any fieldCRUD fieldTitles
 
-                if (fieldCRUD.readField(fieldName) != undefined || fieldName === fieldCRUD.findFieldByOldTitle(fieldName)) {
+                if (fieldCRUD.readField(fieldName) != undefined) {
                     matchFound = true;
                     newField = fieldCRUD.readField(fieldName);
                     console.log("match found for " + fieldName)

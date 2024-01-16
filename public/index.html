@@ -65,7 +65,9 @@
     }
     modalOk.onclick = function () {
       //console.log(modal,modal.querySelector('#fontFamily').value);	
-      efb.setAttribute('data-field', modal.querySelector('#dataField').value);
+      if (efb.getAttribute('data-field') != modal.querySelector('#dataField').value) {
+        efb.setAttribute('data-newtitle', modal.querySelector('#dataField').value);
+      }
       efb.innerText = modal.querySelector('#innerText').value;
       // re-add the span "font-control fa fa-edit" to the element as a child
       efb.appendChild(document.createElement('span'));
@@ -77,7 +79,11 @@
         openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
         let mmodal = document.querySelector('.modal-body');
         // change the data-field of the modal to the editable-field's data-field using efb
-        mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
+        if (efb.getAttribute('data-field') == modal.querySelector('#dataField').value && efb.getAttribute('data-newtitle') == null) {
+          mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
+        } else {
+          mmodal.querySelector('#dataField').value = efb.getAttribute('data-newtitle');
+        }
         // change the innerText of the modal to the editable-field's innerText using efb
         mmodal.querySelector('#innerText').value = efb.innerText;
         console.log(" we are changing " + efb.getAttribute('data-field') + " and " + efb.innerText);
