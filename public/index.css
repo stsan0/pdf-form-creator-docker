@@ -57,7 +57,7 @@ li a {
   background-color: #fff;
     }
 
-#canvas > * {
+#canvas [id="editable-field"] {
   position: absolute;
   border: 1px solid #000;
   background-color: #fff;
