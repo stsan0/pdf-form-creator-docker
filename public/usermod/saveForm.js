@@ -29,6 +29,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     field.acroField.removeWidget(0);
                 }
                 if (index == 0) {
+                    form.removeField(field);
                     const textPosition = {
                         x: parseInt(widget.getRectangle().x) * (1 / scale),
                         y: parseInt(widget.getRectangle().y) * (1 / scale),
@@ -36,7 +37,6 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                         height: parseInt(widget.getRectangle().height) * (1 / scale),
                     }
                     // widget.setRectangle(textPosition);
-                    form.removeField(field);
                     // Create a new field with the same name and flags as the old field
                     if (field.constructor.name == "PDFTextField2") {
                         newPdfField = form.createTextField(newField.newTitle);
