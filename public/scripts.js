@@ -226,6 +226,10 @@ function createEF(field, form, pageNumber) {
     });
 }
 
+// update existing fieldCRUD and other fields' text and newTitle when a field is edited
+//function pollinate(
+
+
 document.querySelector(".modal-ok").addEventListener("click", function (e) {
     //let modalContent = e.target.parentElement;
     const efb = document.querySelector('.modal-body');
@@ -274,14 +278,6 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         //let newField = form.createTextField(modalDataField)
         if (efb.querySelector('#innerText').value != ' ') {
             newField.setText(efb.querySelector('#innerText').value);
-        }
-        const textPosition = {
-            x: parseInt(fieldRect.x) * (1 / scale),
-            y: parseInt(fieldRect.y) * (1 / scale),
-            width: parseInt(fieldRect.width) * (1 / scale),
-            height: parseInt(fieldRect.height) * (1 / scale),
-            textColor: (innerTextBlock.color),
-            //font: innerTextBlock.fontFamily TODO: error here because of pdfDoc embedfont
         }
         //let page = pdfDoc.getPage(pageNumber)
         // newField.addToPage(page, textPosition);

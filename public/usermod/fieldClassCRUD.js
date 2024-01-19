@@ -8,7 +8,7 @@ export default class FieldCRUD {
         this.fields[title] = {
             fieldTitle: title,
             fieldInnerText: {
-                text: fieldInnerText,
+                text: fieldInnerText.text || null,
                 fontSize: fieldInnerText.fontSize || null,
                 fontColor: fieldInnerText.fontColor || null,
                 fontStyle: fieldInnerText.fontStyle || null,
