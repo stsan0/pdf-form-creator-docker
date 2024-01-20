@@ -41,7 +41,8 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     if (field.constructor.name == "PDFTextField2") {
                         newPdfField = form.createTextField(newField.newTitle);
                         console.log("The text of " + newField.newTitle + " is " + newField.fieldInnerText.text)
-                        newPdfField.setText(newField.fieldInnerText.text);
+                        if (newField.fieldInnerText.text != null)
+                            newPdfField.setText(newField.fieldInnerText.text);
                     } else if (field.constructor.name == "PDFCheckBox2") {
                         newPdfField = form.createCheckBox(newField.newTitle);
                         // elseifs are not tested yet
