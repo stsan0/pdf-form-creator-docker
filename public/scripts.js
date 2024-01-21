@@ -305,8 +305,14 @@ pdfContainer.addEventListener('drop', function (event) {
     let pageNumber = editableField.getAttribute('data-page');
     console.log("adding droppable field to fieldCRUD");
     fieldCRUD.createField(editableField.getAttribute('data-field'), innerTextBlock, fieldRect, pageNumber);
-    // since the field is not in the form, add it to the form
-    let newField = form.createTextField(editableField.getAttribute('data-field'))
+    // if the field is not in the form, add it to the form. else, newfield = form.getfield
+    let newField = null;
+    if (form.getFieldMaybe(editableField.getAttribute('data-field')) == undefined) {
+        newField = form.createTextField(editableField.getAttribute('data-field'))
+    }
+    else {
+        newField = form.getFieldMaybe(editableField.getAttribute('data-field'));
+    }
     if (editableField.innerText != ' ') {
         newField.setText(editableField.innerText);
     }
