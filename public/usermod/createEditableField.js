@@ -203,6 +203,8 @@ pdfContainer.onmousemove = function (e) {
     e.preventDefault();
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
     let pos2 = Math.max((e.clientY - startY), 0);
+    // offsetY =  ((pdfHeight - pos2) / pdfHeight) * screenMaxY 
+    
     lastDrag.style.left = pos1 + 'px';
     lastDrag.style.bottom = pos2 + 'px';
 }

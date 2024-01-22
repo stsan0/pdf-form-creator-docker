@@ -74,6 +74,7 @@ function areYouSure() {
     const canvas = document.getElementById('canvas');
     if (canvas.firstChild || pdfContainer.childElementCount > 1) {
         if (confirm("Changes will be lost if you press OK and replace the current PDF. Press Cancel to keep the current PDF.")) {
+           // TODO: getpage removepage until all gone
             while (canvas.firstChild) {
                 canvas.removeChild(canvas.firstChild);
             }
@@ -324,7 +325,7 @@ pdfContainer.addEventListener('drop', function (event) {
     }
     let page = pdfDoc.getPage(parseInt(pageNumber))
     newField.addToPage(page, textPosition);
-    form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
+    form.markFieldAsDirty(form.getFieldMaybe(editableField.getAttribute('data-field')).ref);
 });
 
 // Add event listener for when mouse button is released
