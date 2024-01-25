@@ -74,13 +74,16 @@ export default async function createEditableField(rect, pageIndex, className, in
         // TODO: make the tag see the parent element after the first time used for editing
         console.log(e.target);
         console.log(efb);
-        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
+        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.getAttribute('data-field'));
+        let modalbg = document.querySelector('.modal');
+        modalbg.style.left = e.clientX + 'px';
+        modalbg.style.top = e.clientY + 100 + 'px'; // this puts the modal position where the mouse is clicked
+
         let mmodal = document.querySelector('.modal-body');
         // change the data-field of the modal to the editable-field's data-field using efb
         mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
         // change the innerText of the modal to the editable-field's innerText using efb
         mmodal.querySelector('#innerText').value = efb.innerText;
-        console.log(" we are changing " + efb.getAttribute('data-field') + " and " + efb.innerText);
 
         mmodal.querySelector('#fontSize').value = efb.style.fontSize.replace('px', '');
         //console.log(efb.style.fontFamily);
@@ -88,6 +91,17 @@ export default async function createEditableField(rect, pageIndex, className, in
         mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
         mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
         mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
+        // get x y width height from efb
+        let x = efb.style.left.replace('px', '');
+        let y = efb.style.bottom.replace('px', '');
+        let width = efb.style.width.replace('px', '');
+        let height = efb.style.height.replace('px', '');
+        console.log(x + " " + y + " " + width + " " + height)
+        mmodal.querySelector('#x').value = x;
+        mmodal.querySelector('#y').value = y;
+        mmodal.querySelector('#width').value = width;
+        mmodal.querySelector('#height').value = height;
+
     });
 
 
@@ -98,14 +112,14 @@ export default async function createEditableField(rect, pageIndex, className, in
         if (event.target.hasAttribute('data-width')) {
             o = event.target.getAttribute('data-width');
         }
-        console.log('...' + event.target.style.width, o);
+        //console.log('...' + event.target.style.width, o);
         if (event.target.style.width != o) {
             event.target.setAttribute('data-width', event.target.style.width);
 
             //console.log('width changed to ' + event.target.style.width);
         }
         event.target.getElementsByClassName('span');
-        console.log("clicking " + event.target.id);
+        //console.log("clicking " + event.target.id);
     })
     fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();
@@ -204,7 +218,7 @@ pdfContainer.onmousemove = function (e) {
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
     let pos2 = Math.max((e.clientY - startY), 0);
     // offsetY =  ((pdfHeight - pos2) / pdfHeight) * screenMaxY 
-    
+
     lastDrag.style.left = pos1 + 'px';
     lastDrag.style.bottom = pos2 + 'px';
 }

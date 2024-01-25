@@ -74,7 +74,7 @@ function areYouSure() {
     const canvas = document.getElementById('canvas');
     if (canvas.firstChild || pdfContainer.childElementCount > 1) {
         if (confirm("Changes will be lost if you press OK and replace the current PDF. Press Cancel to keep the current PDF.")) {
-           // TODO: getpage removepage until all gone
+            // TODO: getpage removepage until all gone
             while (canvas.firstChild) {
                 canvas.removeChild(canvas.firstChild);
             }
@@ -237,16 +237,13 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     // get the editable field div with a query selector using the modal's data-field attribute
     // to match with the editable field's data-field attribute
     const modalDataField = efb.querySelector('#dataField').value;
-    const editableFieldDiv = document.querySelector(`[data-field="${modalDataField}"]`);
-    const oldField = editableFieldDiv.getAttribute('data-oldfield');
-    const newTitle = editableFieldDiv.getAttribute('data-newtitle');
-    let read = fieldCRUD.readField(modalDataField);
-    console.log(read);
-    if (read == undefined) {
-        read = fieldCRUD.findFieldByOldTitle(oldField);
-        console.log("field not found, using old title " + oldField + " instead");
-        console.log(read);
+    let editableFieldDiv = document.querySelector(`[data-field="${modalDataField}"]`);
+    if (editableFieldDiv == null) {
+        editableFieldDiv = document.querySelector(`[data-newtitle="${modalDataField}"]`);
     }
+    //const oldField = editableFieldDiv.getAttribute('data-oldfield');
+    let read = fieldCRUD.readField(editableFieldDiv.getAttribute('data-field'));
+    console.log(read);
     console.log("setting text to: " + efb.querySelector('#innerText').value + " on the page " + pageNumber);
     let innerTextBlock = {
         text: efb.querySelector('#innerText').value,
@@ -256,17 +253,32 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         fontFamily: efb.querySelector('#fontFamily').value.replace(/"/g, '') || null,
         fontWeight: efb.querySelector('#fontWeight').value || null
     }
-    let fieldRect = fieldCRUD.getAcrofieldWidgets(modalDataField);
-    fieldCRUD.updateField(modalDataField,
+    let fieldRect = {
+        x: parseInt(efb.querySelector('#x').value),
+        y: parseInt(efb.querySelector('#y').value),
+        width: parseInt(efb.querySelector('#width').value),
+        height: parseInt(efb.querySelector('#height').value)
+    }
+    fieldCRUD.setAcrofieldWidgets(editableFieldDiv.getAttribute('data-field'), fieldRect);
+    let textField = form.getFieldMaybe(editableFieldDiv.getAttribute('data-field'));
+    if (textField) {
+        let wc = editableFieldDiv.getAttribute('data-widgetcount');
+        let widgets = textField.acroField.getWidgets()
+        widgets[wc].setRectangle(fieldRect);
+    }
+    //fieldRect = fieldCRUD.getAcrofieldWidgets(modalDataField);
+    fieldCRUD.updateField(editableFieldDiv.getAttribute('data-field'),
         innerTextBlock,
         fieldRect,
         pageNumber);
     // console.log type of efb.getAttribute('data-field')
     // markfieldasdirty
-    console.log("marking field as dirty: " + form.getFieldMaybe(modalDataField));
-    let fieldDirty = form.getFieldMaybe(modalDataField)
+
+    console.log("marking field as dirty: " + form.getFieldMaybe(editableFieldDiv.getAttribute('data-field')));
+    let fieldDirty = form.getFieldMaybe(editableFieldDiv.getAttribute('data-field'));
+    const newTitle = editableFieldDiv.getAttribute('data-newtitle');
     if (newTitle) {
-        fieldCRUD.setNewTitle(modalDataField, newTitle);
+        fieldCRUD.setNewTitle(editableFieldDiv.getAttribute('data-field'), newTitle);
         console.log(fieldDirty + " should be named " + newTitle);
     }
 
@@ -275,7 +287,7 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         console.log("Dirt marked: " + fieldDirty.ref);
     } else {
         // the field must be saved to the form first. next OK we can set it as dirty
-        console.log("saving field " + modalDataField);
+        console.log("saving field " + editableFieldDiv);
         //let newField = form.createTextField(modalDataField)
         if (efb.querySelector('#innerText').value != ' ') {
             newField.setText(efb.querySelector('#innerText').value);

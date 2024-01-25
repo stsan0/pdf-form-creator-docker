@@ -110,12 +110,12 @@ span.font-control.fa.fa-edit{
 /* The Modal (background) */
 .modal {
   display: none; /* Hidden by default */
-  position: fixed;
-  top: 80%;
+  position: absolute;
+  /*top: 80%;
   left: 86%;
   -webkit-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
-  transform: translateY(-50%);
+  transform: translateY(-50%);*/
     z-index: 26;
     width: 140px;
     /* padding: 20px; */

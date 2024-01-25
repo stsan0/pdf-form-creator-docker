@@ -65,6 +65,8 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                         // for creating digital signatures or reading the contents 
                         // of existing digital signatures.
                     }
+
+                    // console.log(color[0]); // check if red is of type number
                     newPdfField.addToPage(page,
                         {
                             x: textPosition.x,

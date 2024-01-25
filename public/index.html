@@ -74,14 +74,16 @@
       efb.lastChild.setAttribute('class', 'font-control fa fa-edit');
       efb.lastChild.addEventListener('click', function (e) {
         efb = e.target.parentElement;
-        console.log(e.target);
-        console.log(efb);
-        openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.innerText);
         let mmodal = document.querySelector('.modal-body');
         // change the data-field of the modal to the editable-field's data-field using efb
-        if (efb.getAttribute('data-field') == modal.querySelector('#dataField').value && efb.getAttribute('data-newtitle') == null) {
+        if (efb.getAttribute('data-field') == modal.querySelector('#dataField').value) {
+          openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.getAttribute('data-field'));
+
           mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
-        } else {
+        }
+        if (efb.getAttribute('data-newtitle') != null) {
+          openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.getAttribute('data-newtitle'));
+
           mmodal.querySelector('#dataField').value = efb.getAttribute('data-newtitle');
         }
         // change the innerText of the modal to the editable-field's innerText using efb
@@ -94,7 +96,16 @@
         mmodal.querySelector('#fontFamily').value = efb.style.fontFamily.replace(/"/g, '');
         mmodal.querySelector('#fontStyle').value = efb.style.fontStyle;
         mmodal.querySelector('#fontWeight').value = efb.style.fontWeight;
-
+        // get x y width height from efb
+        let x = efb.style.left.replace('px', '');
+        let y = efb.style.bottom.replace('px', '');
+        let width = efb.style.width.replace('px', '');
+        let height = efb.style.height.replace('px', '');
+        //console.log(x + " " + y + " " + width + " " + height)
+        mmodal.querySelector('#x').value = x;
+        mmodal.querySelector('#y').value = y;
+        mmodal.querySelector('#width').value = width;
+        mmodal.querySelector('#height').value = height;
       });
 
       efb.style.fontSize = modal.querySelector('#fontSize').value + 'px';
@@ -102,6 +113,12 @@
       efb.style.fontFamily = modal.querySelector('#fontFamily').value;
       efb.style.fontStyle = modal.querySelector('#fontStyle').value;
       efb.style.fontWeight = modal.querySelector('#fontWeight').value;
+
+      // set the efb style x y width height
+      efb.style.left = modal.querySelector('#x').value + 'px';
+      efb.style.bottom = modal.querySelector('#y').value + 'px';
+      efb.style.width = modal.querySelector('#width').value + 'px';
+      efb.style.height = modal.querySelector('#height').value + 'px';
     }
     function aferIconCheck(e) {
 
@@ -148,8 +165,8 @@
   <script src="scripts.js" type="module"></script>
   <ul>
     <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">
-        <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy" style="width: 200px;">
-      </h1>
+      <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy" style="width: 200px;">
+    </h1>
   </ul>
 
   <div id="selector">
@@ -186,12 +203,12 @@
       <br></br>
       <label for="fontSize">Font Size:</label>
       <select id="fontSize">
-        <option value="auto">Auto</option>
+        <option value="0">Auto</option>
         <option value="4">4</option>
         <option value="6">6</option>
         <option value="8">8</option>
         <option value="10">10</option>
-        <option value="12">12</option>
+        <option value="12" selected>12</option>
         <option value="14">14</option>
         <option value="18">18</option>
         <option value="24">24</option>
@@ -226,7 +243,16 @@
         <option value="bold">Bold</option>
         <option value="lighter">Lighter</option>
       </select>
-
+      <!-- get x y width height  -->
+      <br></br>
+      <label for="x"> x: </label>
+      <input type=number id="x" value="0" style=" width: 99px">
+      <label for="y"> y: </label>
+      <input type=number id="y" value="0" style=" width: 99px">
+      <label for="width"> width: </label>
+      <input type=number id="width" value="0" style=" width: 99px">
+      <label for="height"> height: </label>
+      <input type=number id="height" value="0" style=" width: 99px">
 
     </div>
   </div>
