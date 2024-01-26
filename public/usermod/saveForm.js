@@ -12,9 +12,9 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
             // Check if the field's name matches any fieldCRUD fieldTitles
             if (fieldCRUD.readField(fieldName) != undefined) {
                 newField = fieldCRUD.readField(fieldName);
-                console.log("match found for " + fieldName)
+                //console.log("match found for " + fieldName)
             }
-            let color = hexToRGB(fieldCRUD.getFontColor(newField.fieldTitle));
+            let color = stringtoRGB(fieldCRUD.getFontColor(newField.fieldTitle));
             //let font = fieldCRUD.getFontFamily(newField)
             let size = parseInt(fieldCRUD.getFontSize(newField.fieldTitle));
             if (newField.newTitle === null) {
@@ -23,7 +23,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
             const widgets = field.acroField.getWidgets();
             widgets.forEach((widget, index) => {
                 let newPdfField = null;
-                let page = pdfDoc.getPage(newField.pageIndex);
+                let page = pdfDoc.getPage(parseInt(newField.pageIndex));
                 // Remove the old field from the form
                 while (field.acroField.getWidgets().length) {
                     field.acroField.removeWidget(0);
@@ -40,7 +40,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     // Create a new field with the same name and flags as the old field
                     if (field.constructor.name == "PDFTextField2") {
                         newPdfField = form.createTextField(newField.newTitle);
-                        console.log("The text of " + newField.newTitle + " is " + newField.fieldInnerText.text)
+                        //console.log("The text of " + newField.newTitle + " is " + newField.fieldInnerText.text)
                         if (newField.fieldInnerText.text != null)
                             newPdfField.setText(newField.fieldInnerText.text);
                     } else if (field.constructor.name == "PDFCheckBox2") {
@@ -65,8 +65,6 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                         // for creating digital signatures or reading the contents 
                         // of existing digital signatures.
                     }
-
-                    // console.log(color[0]); // check if red is of type number
                     newPdfField.addToPage(page,
                         {
                             x: textPosition.x,
@@ -115,9 +113,12 @@ function downloadPdf(data, filename) {
     link.click();
 }
 
-function hexToRGB(hex) {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+function stringtoRGB(hex) {
+    let rgb = hex.substring(4, hex.length - 1)
+        .replace(/ /g, '')
+        .split(',');
+    const r = parseFloat(rgb[0])
+    const g = parseFloat(rgb[1])
+    const b = parseFloat(rgb[2])
     return [+(r / 255).toFixed(3), +(g / 255).toFixed(3), +(b / 255).toFixed(3)];
 };
