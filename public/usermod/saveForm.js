@@ -1,4 +1,4 @@
-import { StandardFonts, PDFName, PDFRef, rgb } from '../pdf-lib';
+import { StandardFonts, PDFName, PDFRef, rgb } from 'https://cdn.skypack.dev/pdf-lib';
 const scale = 2;
 export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
     const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica)

@@ -1,4 +1,4 @@
-import { PDFDocument, PDFName, PDFRef, StandardFonts } from '../pdf-lib';
+import { PDFDocument, PDFName, PDFRef, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 import createEditableField from './usermod/createEditableField.js';
 import displayFields from './usermod/displayFields.js';

@@ -169,11 +169,13 @@
     </h1>
   </ul>
 
-  <div id="selector">
+  <aside id="selector">
     <input type="file" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn">Load PDF</button>
     <button id="displayFieldsBtn">Show Fields</button>
     <button id="editFormBtn">Save Form</button>
+  </aside>
+  <aside id="pageControl">
     <button id="backBtn">
       <i class="fa fa-arrow-up"></i>
       Back
@@ -182,15 +184,18 @@
       Next
       <i class="fa fa-arrow-down"></i>
     </button>
+    <br></br>
     Pages:
     <div id="pageIndex"></div>
     /
     <div id="totalPageIndex"></div>
-  </div>
-  <div id="pdf-container">
+  </aside>
+
+  <article id="pdf-container">
     <div id="canvas"></div> <!-- Holds all editable-text-fields -->
-  </div>
-  <div id="toolbox">
+  </article>
+
+  <aside id="toolbox">
     Drag'n'Drop to add fields
     <div id="toolbox-field" draggable="true" data-field="editable-field"
       style=" border-color: black; box-shadow: var(--focus-01); padding: 5px">
@@ -255,8 +260,8 @@
       <input type=number id="height" value="0" style=" width: 99px">
 
     </div>
-  </div>
-  <div id="fields-container"></div>
+  </aside>
+  <article id="fields-container"></article>
 </body>
 
 </html>
