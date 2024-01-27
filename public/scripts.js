@@ -1,4 +1,4 @@
-import { PDFDocument, PDFName, PDFRef, StandardFonts } from 'https://cdn.skypack.dev/pdf-lib';
+import { PDFDocument, PDFName, PDFRef, StandardFonts } from '../pdf-lib';
 import * as pdfjs_viewer from './pdfjs-dist/build/pdf.mjs';
 import createEditableField from './usermod/createEditableField.js';
 import displayFields from './usermod/displayFields.js';
@@ -357,7 +357,7 @@ pdfContainer.addEventListener('mouseup', function (event) {
         width: parseInt(efb.style.width),
         height: parseInt(efb.style.height)
     }
-    console.log("bottom is" + efb.style.bottom)
+    //console.log("bottom is" + efb.style.bottom)
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
     let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
     if (textField) {

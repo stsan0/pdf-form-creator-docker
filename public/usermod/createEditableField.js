@@ -48,8 +48,11 @@ export default async function createEditableField(rect, pageIndex, className, in
 
     // add a datamember for the div, keep id as editable-field
     fieldText.id = 'editable-field';
-    while (className == 'editable-field' || !className) {
+    if (className == 'editable-field' || !className) {
         className = prompt("Prior name is " + className + ". Please enter a name for the field");
+        if (className == null) {
+            return;
+        }
         console.log(className)
     }
     fieldText.setAttribute('data-field', className);
@@ -71,13 +74,12 @@ export default async function createEditableField(rect, pageIndex, className, in
 
     tag.addEventListener('click', function (e) {
         efb = e.target.parentElement;
-        // TODO: make the tag see the parent element after the first time used for editing
-        console.log(e.target);
-        console.log(efb);
+        //console.log(e.target);
+        //console.log(efb);
         openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.getAttribute('data-field'));
         let modalbg = document.querySelector('.modal');
-        modalbg.style.left = e.clientX + 'px';
-        modalbg.style.top = e.clientY + 100 + 'px'; // this puts the modal position where the mouse is clicked
+        modalbg.style.left = e.clientX + 'px' //+ calc(50vw - 70px);
+        modalbg.style.top = e.clientY + window.scrollY + 100 + 'px' //+ calc(50vh -224px); // this puts the modal position where the mouse is clicked
 
         let mmodal = document.querySelector('.modal-body');
         // change the data-field of the modal to the editable-field's data-field using efb
@@ -189,6 +191,9 @@ pdfContainer.addEventListener('drop', function (event) {
         let pageNumber = document.getElementById("pageIndex").textContent - 1;
         // x, y, width, height, pageRectangle, pageNumber, name, value, scale
         const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ').then(function (editableField) {
+            if (editableField == null) {
+                return;
+            }
             duplicateFieldChecker(editableField);
             canvas.appendChild(editableField);
         });
@@ -216,9 +221,10 @@ pdfContainer.onmousemove = function (e) {
     if (dragging == false) return;
     e.preventDefault();
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
-    let pos2 = Math.max((e.clientY - startY), 0);
+    let pdfH = pdfContainer.getBoundingClientRect().bottom + window.scrollY;
+    //let smY = pdfContainer.offsetHeight;
+    let pos2 = Math.max(((pdfH - (e.clientY + window.scrollY))), 0);
     // offsetY =  ((pdfHeight - pos2) / pdfHeight) * screenMaxY 
-
     lastDrag.style.left = pos1 + 'px';
     lastDrag.style.bottom = pos2 + 'px';
 }

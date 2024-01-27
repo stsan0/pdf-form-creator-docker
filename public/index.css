@@ -61,7 +61,7 @@ li a {
   background-color: #fff;
   font-family: Arial, Verdana, 'Times New Roman', Tahoma, sans-serif,'Courier New',;
   resize:both;
-  overflow:visible;
+  overflow:hidden;
 
 }
 
