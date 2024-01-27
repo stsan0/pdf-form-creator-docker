@@ -31,16 +31,15 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                 if (index == 0) {
                     form.removeField(field);
                     const textPosition = {
-                        x: parseInt(widget.getRectangle().x) * (1 / scale),
-                        y: parseInt(widget.getRectangle().y) * (1 / scale),
-                        width: parseInt(widget.getRectangle().width) * (1 / scale),
-                        height: parseInt(widget.getRectangle().height) * (1 / scale),
+                        x: parseInt(widget.getRectangle().x),
+                        y: parseInt(widget.getRectangle().y),
+                        width: parseInt(widget.getRectangle().width),
+                        height: parseInt(widget.getRectangle().height),
                     }
                     // widget.setRectangle(textPosition);
                     // Create a new field with the same name and flags as the old field
                     if (field.constructor.name == "PDFTextField2") {
                         newPdfField = form.createTextField(newField.newTitle);
-                        //console.log("The text of " + newField.newTitle + " is " + newField.fieldInnerText.text)
                         if (newField.fieldInnerText.text != null)
                             newPdfField.setText(newField.fieldInnerText.text);
                     } else if (field.constructor.name == "PDFCheckBox2") {
@@ -62,8 +61,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                     } else if (field.constructor.name == "PDFSignature2") {
                         newPdfField = form.createSignature(newField.newTitle);
                         // pdf-lib does not currently provide any specialized APIs
-                        // for creating digital signatures or reading the contents 
-                        // of existing digital signatures.
+                        // for reading the contents of existing digital signatures.
                     }
                     newPdfField.addToPage(page,
                         {
@@ -114,11 +112,34 @@ function downloadPdf(data, filename) {
 }
 
 function stringtoRGB(hex) {
+    // if the first character is a #, call RGBtoHex
+    if (hex[0] == "#") {
+        hex = hexToRGBString(hex);
+    }
+    //console.log(hex);
     let rgb = hex.substring(4, hex.length - 1)
         .replace(/ /g, '')
         .split(',');
+    //console.log(rgb);
     const r = parseFloat(rgb[0])
     const g = parseFloat(rgb[1])
     const b = parseFloat(rgb[2])
+    //console.log(r, g, b);
     return [+(r / 255).toFixed(3), +(g / 255).toFixed(3), +(b / 255).toFixed(3)];
 };
+
+function hexToRGBString(hex) {
+    // if the first character is a #, remove it
+    if (hex[0] == "#") {
+        hex = hex.substring(1);
+    }
+    // if the hex is 3 characters, expand it to 6
+    if (hex.length == 3) {
+        hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+    }
+    // convert the hex to rgb
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4), 16);
+    return "rgb(" + r + "," + g + "," + b + ")";
+}

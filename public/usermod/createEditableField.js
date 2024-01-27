@@ -79,8 +79,11 @@ export default async function createEditableField(rect, pageIndex, className, in
         openModal(document.getElementById('fontControls').innerHTML, 'Editing ' + efb.getAttribute('data-field'));
         let modalbg = document.querySelector('.modal');
         modalbg.style.left = e.clientX + 'px' //+ calc(50vw - 70px);
-        modalbg.style.top = e.clientY + window.scrollY + 100 + 'px' //+ calc(50vh -224px); // this puts the modal position where the mouse is clicked
-
+        modalbg.style.top = e.clientY + window.scrollY + 125 + 'px' //+ calc(50vh -224px); // this puts the modal position where the mouse is clicked
+        // if the modal is too close to the bottom of the screen, move it up
+        if (modalbg.getBoundingClientRect().bottom > pdfContainer.getBoundingClientRect().bottom) {
+            modalbg.style.top = parseFloat(modalbg.style.top) - modalbg.getBoundingClientRect().height + 'px';
+        }
         let mmodal = document.querySelector('.modal-body');
         // change the data-field of the modal to the editable-field's data-field using efb
         mmodal.querySelector('#dataField').value = efb.getAttribute('data-field');
