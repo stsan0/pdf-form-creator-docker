@@ -48,7 +48,6 @@
       efb = null;
       modal.style.display = "none";
     }
-
     // When the user clicks anywhere outside of the modal, close it
     window.onclick = function (event) {
       if (event.target == modal) {
@@ -172,10 +171,10 @@
   <aside id="selector">
     <input type="file" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn">Load PDF</button>
-    <button id="displayFieldsBtn">Show Fields</button>
     <button id="editFormBtn">Save Form</button>
   </aside>
   <aside id="pageControl">
+    <button id="displayFieldsBtn">Show Fields</button>
     <button id="backBtn">
       <i class="fa fa-arrow-up"></i>
       Back

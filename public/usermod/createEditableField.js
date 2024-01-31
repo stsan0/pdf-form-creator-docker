@@ -126,6 +126,7 @@ export default async function createEditableField(rect, pageIndex, className, in
         event.target.getElementsByClassName('span');
         //console.log("clicking " + event.target.id);
     })
+
     fieldText.addEventListener('dragstart', function (event) {
         //const target = event.target.getBoundingClientRect();
         //startX = event.clientX - target.x;

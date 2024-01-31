@@ -20,6 +20,7 @@ let form = null;
 let fields = null;
 const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
+var modal = document.getElementById("myModal");
 
 document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
 document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
@@ -111,6 +112,11 @@ async function renderPdfFields(pageNumber) {
 
 function backBtn() {
     if (pageNumber > 0) {
+        if (modal.style.display != "none") {
+            const efb = document.querySelector('.modal-body');
+            efb = null;  // remove the modal body
+            modal.style.display = "none";
+        }
         pageNumber--;
         console.log("pageNumber: " + pageNumber)
         updatePageNumber();
@@ -121,6 +127,11 @@ function backBtn() {
 
 function nextBtn() {
     if (pageNumber < totalPages - 1) {
+        if (modal.style.display != "none") {
+            const efb = document.querySelector('.modal-body');
+            efb = null;  // remove the modal body
+            modal.style.display = "none";
+        }
         pageNumber++;
         console.log("pageNumber: " + pageNumber)
         updatePageNumber();
