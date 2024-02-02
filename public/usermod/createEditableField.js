@@ -219,11 +219,13 @@ pdfContainer.addEventListener('drop', function (event) {
 pdfContainer.addEventListener('dragover', function (event) {
     event.preventDefault();
     dragging = false;
+    
 });
 
 pdfContainer.onmousemove = function (e) {
     if (dragging == false) return;
-    e.preventDefault();
+    console.log("dragging")
+    e.preventDefault(); // include the mouse's distance from 0 to pos1 
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
     let pdfH = pdfContainer.getBoundingClientRect().bottom + window.scrollY;
     //let smY = pdfContainer.offsetHeight;

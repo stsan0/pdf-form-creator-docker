@@ -185,9 +185,7 @@
     </button>
     <br></br>
     Pages:
-    <div id="pageIndex"></div>
-    /
-    <div id="totalPageIndex"></div>
+    <div id="pageIndex"></div>/<div id="totalPageIndex"></div>
   </aside>
 
   <article id="pdf-container">
@@ -204,61 +202,81 @@
       <input type="text" id="dataField" value="dataField" style=" width: 99px">
       <label for="innerText"> Inner Text: </label>
       <input type="text" id="innerText" value="innerText" style=" width: 99px">
-      <br></br>
-      <label for="fontSize">Font Size:</label>
-      <select id="fontSize">
-        <option value="0">Auto</option>
-        <option value="4">4</option>
-        <option value="6">6</option>
-        <option value="8">8</option>
-        <option value="10">10</option>
-        <option value="12" selected>12</option>
-        <option value="14">14</option>
-        <option value="18">18</option>
-        <option value="24">24</option>
-        <option value="36">36</option>
-        <option value="48">48</option>
-        <option value="64">64</option>
-        <option value="72">72</option>
-        <option value="96">96</option>
-        <option value="144">144</option>
-        <option value="192">192</option>
-        <option value="200">200</option>
-      </select>
-      <label for="fontColor">Font Color:</label>
-      <input type="color" id="fontColor" value="#000000">
-      <br></br>
-      <label for="fontStyle">Font Style:</label>
-      <select id="fontStyle">
-        <option value="normal">Normal</option>
-        <option value="italic">Italic</option>
-      </select>
+      <button class = "collapsible">Text Field Style</button>
+      <div class = "content">
+        <label for="fontSize">Font Size:</label>
+        <select id="fontSize">
+          <option value="0">Auto</option>
+          <option value="4">4</option>
+          <option value="6">6</option>
+          <option value="8">8</option>
+          <option value="10">10</option>
+          <option value="12" selected>12</option>
+          <option value="14">14</option>
+          <option value="18">18</option>
+          <option value="24">24</option>
+          <option value="36">36</option>
+          <option value="48">48</option>
+          <option value="64">64</option>
+          <option value="72">72</option>
+          <option value="96">96</option>
+          <option value="144">144</option>
+          <option value="192">192</option>
+          <option value="200">200</option>
+        </select>
+        <br></br>
+        <label for="fontColor">Font Color:</label>
+        <input type="color" id="fontColor" value="#000000">
+        <br></br>
+        <label for="fontStyle">Font Style:</label>
+        <select id="fontStyle">
+          <option value="normal">Normal</option>
+          <option value="italic">Italic</option>
+        </select>
 
-      <select id="fontFamily" style=" width: 99px">
-        <option value="Arial">Arial</option>
-        <option value="Courier New">Courier New</option>
-        <option value="Verdana">Verdana</option>
-        <option value="Times New Roman">Times New Roman</option>
-        <option value="Tahoma">Tahoma</option>
-        <option value="sans-serif">sans-serif</option>
-      </select>
-      <select id="fontWeight">
-        <option value="normal">Normal</option>
-        <option value="bold">Bold</option>
-        <option value="lighter">Lighter</option>
-      </select>
-      <!-- get x y width height  -->
-      <br></br>
-      <label for="x"> x: </label>
-      <input type=number id="x" value="0" style=" width: 99px">
-      <label for="y"> y: </label>
-      <input type=number id="y" value="0" style=" width: 99px">
-      <label for="width"> width: </label>
-      <input type=number id="width" value="0" style=" width: 99px">
-      <label for="height"> height: </label>
-      <input type=number id="height" value="0" style=" width: 99px">
-
+        <select id="fontFamily" style=" width: 99px">
+          <option value="Arial">Arial</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Times New Roman">Times New Roman</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="sans-serif">sans-serif</option>
+        </select>
+        <select id="fontWeight">
+          <option value="normal">Normal</option>
+          <option value="bold">Bold</option>
+          <option value="lighter">Lighter</option>
+        </select>
+      </div>
+      <button class = "collapsible">Position</button>
+      <div class = "content"><!-- get x y width height  -->
+        <label for="x"> x: </label>
+        <input type=number id="x" value="0" style=" width: 55px">
+        <label for="y"> y: </label>
+        <input type=number id="y" value="0" style=" width: 55px">
+        <label for="width"> width: </label>
+        <input type=number id="width" value="0" style=" width: 55px"> <br></br>
+        <label for="height"> height: </label>
+        <input type=number id="height" value="0" style=" width: 55px">
+      </div>
     </div>
+    <script>
+         var coll = document.getElementsByClassName("collapsible");
+    var i;
+// todo: fix it fully opening on click of the button
+  for (i = 0; i < coll.length; i++) {
+    coll[i].addEventListener("click", function() {
+      console.log(this);
+      this.classList.toggle("active");
+      var content = this.nextElementSibling;
+      if (content.style.maxHeight){
+        content.style.maxHeight = null;
+      } else {
+        content.style.maxHeight = content.scrollHeight + "px";
+      } 
+    });
+  }    
+    </script>
   </aside>
   <article id="fields-container"></article>
 </body>
