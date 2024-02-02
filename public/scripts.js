@@ -88,9 +88,6 @@ function areYouSure() {
             }
             // clear all fields in fieldCRUD
             fieldCRUD.clearFields();
-            // remove all pages in pdfDoc and pdfjs_viewer
-
-
         } else {
             throw new Error("Cancelled");
         }
@@ -98,10 +95,9 @@ function areYouSure() {
 }
 
 async function renderPdfFields(pageNumber) {
-    if (form == null) {
-        form = pdfDoc.getForm();
-        fields = form.getFields();
-    }
+    form = pdfDoc.getForm();
+    fields = form.getFields();
+
     fields.forEach(field => {
         const existingField = document.getElementById(field.getName());
         if (!existingField) {
@@ -116,7 +112,7 @@ async function renderPdfFields(pageNumber) {
 function backBtn() {
     if (pageNumber > 0) {
         if (modal.style.display != "none") {
-            const efb = document.querySelector('.modal-body');
+            let efb = document.querySelector('.modal-body');
             efb = null;  // remove the modal body
             modal.style.display = "none";
         }
@@ -131,7 +127,7 @@ function backBtn() {
 function nextBtn() {
     if (pageNumber < totalPages - 1) {
         if (modal.style.display != "none") {
-            const efb = document.querySelector('.modal-body');
+            let efb = document.querySelector('.modal-body');
             efb = null;  // remove the modal body
             modal.style.display = "none";
         }
@@ -213,11 +209,9 @@ function createEF(field, form, pageNumber) {
         }
         const fieldRect = widget.getRectangle();
         //const pageItself = pdfDoc.getPages().find((p) => p.ref == widget.P());
-
-        let pageIndex = pageIndexFinder(pdfDoc, widget.P());
+        let pageIndex = pageIndexFinder(pdfDoc.getPages(), widget.P());
         if (pageIndex == -1) {
             // TODO: do something
-            console.log("page not found");
         }
 
         //console.log(name + "'s page number: " + pageIndex);
@@ -235,7 +229,6 @@ function createEF(field, form, pageNumber) {
                 fieldCRUD.createField(name, innerTextBlock, fieldRect, pageIndex);
                 fieldCRUD.setWidgetCount(name, widgetCount);
                 //console.log(fieldCRUD.readField(name));
-
             });
         }
     });
@@ -306,9 +299,6 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         if (efb.querySelector('#innerText').value != ' ') {
             newField.setText(efb.querySelector('#innerText').value);
         }
-        //let page = pdfDoc.getPage(pageNumber)
-        // newField.addToPage(page, textPosition);
-        //console.log("new field added to page " + fieldCRUD.getPageIndex(modalDataField));
     }
 });
 
