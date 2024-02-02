@@ -22,14 +22,15 @@ const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
 var modal = document.getElementById("myModal");
 
-document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
+//document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
+//document.getElementById("pdf-file-input").addEventListener("click", loadPdf);
 document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
 document.getElementById("displayFieldsBtn").addEventListener("click", displayFields);
 document.getElementById("backBtn").addEventListener("click", backBtn);
 document.getElementById("nextBtn").addEventListener("click", nextBtn);
-
-
-
+var input = document.getElementsByTagName('input')[0];
+input.onclick = function () { this.value = null; };
+input.onchange = function () { loadPdf() };
 async function loadPdf() {
     areYouSure(); // adds a pop up if canvas and pdf-container are not empty
     const fileInput = document.getElementById('pdf-file-input');
@@ -87,6 +88,8 @@ function areYouSure() {
             }
             // clear all fields in fieldCRUD
             fieldCRUD.clearFields();
+            // remove all pages in pdfDoc and pdfjs_viewer
+
 
         } else {
             throw new Error("Cancelled");
