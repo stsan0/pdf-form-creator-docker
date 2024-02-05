@@ -11,7 +11,7 @@
 
 <body>
   <!-- The Modal -->
-  <div id="myModal" class="modal">
+  <div id="myModal" class="modal" style="display: none">
 
     <!-- Modal content -->
 
@@ -202,8 +202,8 @@
       <input type="text" id="dataField" value="dataField" style=" width: 99px">
       <label for="innerText"> Inner Text: </label>
       <input type="text" id="innerText" value="innerText" style=" width: 99px">
-      <button class = "collapsible">Text Field Style</button>
-      <div class = "content">
+      <button class="collapsible">Text Field Style</button>
+      <div class="content">
         <label for="fontSize">Font Size:</label>
         <select id="fontSize">
           <option value="0">Auto</option>
@@ -248,34 +248,34 @@
           <option value="lighter">Lighter</option>
         </select>
       </div>
-      <button class = "collapsible">Position</button>
-      <div class = "content"><!-- get x y width height  -->
+      <button class="collapsible">Position</button>
+      <div class="content"><!-- get x y width height  -->
         <label for="x"> x: </label>
-        <input type=number id="x" value="0" style=" width: 55px">
+        <input type=number id="x" value="0" style=" width: 50px">
         <label for="y"> y: </label>
         <input type=number id="y" value="0" style=" width: 55px">
         <label for="width"> width: </label>
-        <input type=number id="width" value="0" style=" width: 55px"> <br></br>
+        <input type=number id="width" value="0" style=" width: 55px"> <br>
         <label for="height"> height: </label>
         <input type=number id="height" value="0" style=" width: 55px">
       </div>
     </div>
     <script>
-         var coll = document.getElementsByClassName("collapsible");
-    var i;
-// todo: fix it fully opening on click of the button
-  for (i = 0; i < coll.length; i++) {
-    coll[i].addEventListener("click", function() {
-      console.log(this);
-      this.classList.toggle("active");
-      var content = this.nextElementSibling;
-      if (content.style.maxHeight){
-        content.style.maxHeight = null;
-      } else {
-        content.style.maxHeight = content.scrollHeight + "px";
-      } 
-    });
-  }    
+      var coll = document.getElementsByClassName("collapsible");
+      var i;
+      // todo: fix it fully opening on click of the button
+      for (i = 0; i < coll.length; i++) {
+        coll[i].addEventListener("click", function () {
+          console.log(this);
+          this.classList.toggle("active");
+          var content = this.nextElementSibling;
+          if (content.style.display === "block") {
+            content.style.display = "none";
+          } else {
+            content.style.display = "block";
+          }
+        });
+      }    
     </script>
   </aside>
   <article id="fields-container"></article>

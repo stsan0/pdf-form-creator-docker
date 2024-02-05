@@ -60,8 +60,7 @@ export default async function editForm(pdfDoc, form, fieldCRUD, scale = 2) {
                         newPdfField.select(field.getSelected());
                     } else if (field.constructor.name == "PDFSignature2") {
                         newPdfField = form.createSignature(newField.newTitle);
-                        // pdf-lib does not currently provide any specialized APIs
-                        // for reading the contents of existing digital signatures.
+                        // find an API for existing signatures
                     }
                     newPdfField.addToPage(page,
                         {

@@ -261,10 +261,10 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
         fontWeight: efb.querySelector('#fontWeight').value || null
     }
     let fieldRect = {
-        x: parseInt(efb.querySelector('#x').value),
-        y: parseInt(efb.querySelector('#y').value),
-        width: parseInt(efb.querySelector('#width').value),
-        height: parseInt(efb.querySelector('#height').value)
+        x: parseFloat(efb.querySelector('#x').value) * 1 / scale,
+        y: parseFloat(efb.querySelector('#y').value) * 1 / scale,
+        width: parseFloat(efb.querySelector('#width').value) * 1 / scale,
+        height: parseFloat(efb.querySelector('#height').value) * 1 / scale
     }
     fieldCRUD.setAcrofieldWidgets(editableFieldDiv.getAttribute('data-field'), fieldRect);
     let textField = form.getFieldMaybe(editableFieldDiv.getAttribute('data-field'));
@@ -356,10 +356,10 @@ pdfContainer.addEventListener('mouseup', function (event) {
     }
     console.log("mouseup: " + efb.id)
     let fieldRect = {
-        x: parseInt(efb.style.left),
-        y: parseInt(efb.style.bottom),
-        width: parseInt(efb.style.width),
-        height: parseInt(efb.style.height)
+        x: parseFloat(efb.style.left) * 1 / scale,
+        y: parseFloat(efb.style.bottom) * 1 / scale,
+        width: parseFloat(efb.style.width) * 1 / scale,
+        height: parseFloat(efb.style.height) * 1 / scale
     }
     //console.log("bottom is" + efb.style.bottom)
     fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);

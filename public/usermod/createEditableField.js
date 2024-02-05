@@ -219,7 +219,7 @@ pdfContainer.addEventListener('drop', function (event) {
 pdfContainer.addEventListener('dragover', function (event) {
     event.preventDefault();
     dragging = false;
-    
+
 });
 
 pdfContainer.onmousemove = function (e) {
@@ -230,9 +230,22 @@ pdfContainer.onmousemove = function (e) {
     let pdfH = pdfContainer.getBoundingClientRect().bottom + window.scrollY;
     //let smY = pdfContainer.offsetHeight;
     let pos2 = Math.max(((pdfH - (e.clientY + window.scrollY))), 0);
+    let pdfHTop = pdfContainer.getBoundingClientRect().top + window.scrollY;
+    let posTop = Math.max(((e.clientY + window.scrollY) - pdfHTop), 0);
     // offsetY =  ((pdfHeight - pos2) / pdfHeight) * screenMaxY 
     lastDrag.style.left = pos1 + 'px';
+    // add height of the div to the bottom
     lastDrag.style.bottom = pos2 + 'px';
+    lastDrag.style.top = posTop + 'px';
+    const myM = document.getElementById('myModal');
+    const efb = document.querySelector('.modal-body'); // if modal-body is not null, show changes in x and y
+
+    // change the inputs for x and y to the mouse position
+    if (myM.style.display != "none" && efb.querySelector('#dataField').value == lastDrag.getAttribute('data-field')) {
+        efb.querySelector('#x').value = pos1;
+        efb.querySelector('#y').value = pos2;
+    }
+
 }
 
 // Add event listener for when mouse button is released
