@@ -6,28 +6,24 @@ import editForm from './usermod/saveForm.js';
 import FieldCRUD from './usermod/fieldClassCRUD.js';
 import duplicateFieldChecker from './usermod/duplicateFieldChecker.js';
 import pageIndexFinder from './usermod/pageIndexFinder.js';
-
 let pageIndexDiv = document.getElementById("pageIndex");
-let totalPageIndexDiv = document.getElementById("totalPageIndex");
 let pageNumber = 0; // Initial pageNumber
 let totalPages = 0;
 
 let pdfDoc = null;
 let pdfjsGlobal = null;
 pdfjs_viewer.GlobalWorkerOptions.workerSrc = './pdfjs-dist/build/pdf.worker.min.mjs';
-const scale = 2;
+let scale = 2;
 let form = null;
 let fields = null;
 const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
 var modal = document.getElementById("myModal");
-
-//document.getElementById("loadPdfBtn").addEventListener("click", loadPdf);
-//document.getElementById("pdf-file-input").addEventListener("click", loadPdf);
 document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
 document.getElementById("displayFieldsBtn").addEventListener("click", displayFields);
 document.getElementById("backBtn").addEventListener("click", backBtn);
 document.getElementById("nextBtn").addEventListener("click", nextBtn);
+
 var input = document.getElementsByTagName('input')[0];
 input.onclick = function () { this.value = null; };
 input.onchange = function () { loadPdf() };
@@ -140,8 +136,8 @@ function nextBtn() {
 }
 
 function updatePageNumber() {
-    pageIndexDiv.textContent = pageNumber + 1; // Adding 1 to display the page number starting from 1
-    totalPageIndexDiv.textContent = totalPages;
+    pageIndexDiv.textContent = pageNumber + 1 + "/" + totalPages; // Adding 1 to display the page number starting from 1
+    //totalPageIndexDiv.textContent = totalPages;
 }
 
 function removeOldPage() {
@@ -178,6 +174,19 @@ async function updateToNewPage() {
     });
     console.log('PDF loaded');
 }
+
+// implement zoom buttons with scale
+document.getElementById("zoomInBtn").addEventListener("click", function () {
+    scale += 0.5;
+    removeOldPage();
+    updateToNewPage();
+});
+
+document.getElementById("zoomOutBtn").addEventListener("click", function () {
+    scale -= 0.5;
+    removeOldPage();
+    updateToNewPage();
+});
 
 function createEF(field, form, pageNumber) {
     let name = field.getName();

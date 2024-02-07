@@ -41,6 +41,19 @@
       document.querySelector('.modal-title').innerHTML = title;
       document.querySelector('.modal-body').innerHTML = text;
       modal.style.display = "block";
+      var coll = modal.getElementsByClassName("collapsible"); // get all collapsible buttons
+      for (let i = 0; i < coll.length; i++) { // loop through all collapsible buttons
+        //coll[i].nextElementSibling.style.display = "none" // hide all collapsible content
+        coll[i].onclick = function () { // add event listener to all collapsible buttons
+          this.classList.toggle("active"); // toggle the active class
+          var content = this.nextElementSibling; // get the next sibling of the button
+          if (content.style.display === "block") {
+            content.style.display = "none"; // if the content is visible, hide it
+          } else {
+            content.style.display = "block"; // if the content is hidden, show it
+          }
+        };
+      }
     }
 
     // When the user clicks on <span> (x), close the modal
@@ -119,27 +132,9 @@
       efb.style.width = modal.querySelector('#width').value + 'px';
       efb.style.height = modal.querySelector('#height').value + 'px';
     }
-    function aferIconCheck(e) {
 
-      // First we get the pseudo-elements style
-      const target = e.currentTarget || e.target
-      const after = getComputedStyle(target, ":after")
-      if (after) {
-        // Then we parse out the dimensions
-        const atop = Number(after.getPropertyValue("top").slice(0, -2))
-        const aheight = Number(after.getPropertyValue("height").slice(0, -2))
-        const aleft = Number(after.getPropertyValue("left").slice(0, -2))
-        const awidth = Number(after.getPropertyValue("width").slice(0, -2))
-        // And get the mouse position
-        const ex = e.layerX
-        const ey = e.layerY
-        // Finally we do a bounds check (Is the mouse inside of the after element)
-        if (ex > aleft && ex < aleft + awidth && ey > atop && ey < atop + aheight) {
-          return true;
-        }
-        return false;
-      }
-    }
+
+
     function RGBToHex(rgb) {
       // Choose correct separator
       let sep = rgb.indexOf(",") > -1 ? "," : " ";
@@ -159,20 +154,23 @@
 
       return "#" + r + g + b;
     }
-    var greg = null;
+    //var greg = null;
   </script>
   <script src="scripts.js" type="module"></script>
   <ul>
-    <h1 class="pl-3 pr-3 lg:pr-6 text-lg font-medium">
+    <h1>
       <img src="logo-2-gray_b1314f12e2060642c2a7f9ceff48be9c-1.png" alt="Logo" loading="lazy" style="width: 200px;">
     </h1>
   </ul>
 
-  <aside id="selector">
+  <menu id="selector">
     <input type="file" value="C:\fakepath" id="pdf-file-input" accept=".pdf"> </input>
     <button id="loadPdfBtn" hidden>Load PDF</button>
     <button id="editFormBtn">Save Form</button>
-  </aside>
+    <!--zoom in and zoom out button-->
+    <button id="zoomInBtn">Zoom In</button>
+    <button id="zoomOutBtn">Zoom Out</button>
+  </menu>
   <aside id="pageControl">
     <button id="displayFieldsBtn">Show Fields</button>
     <button id="backBtn">
@@ -185,7 +183,7 @@
     </button>
     <br></br>
     Pages:
-    <div id="pageIndex"></div>/<div id="totalPageIndex"></div>
+    <div id="pageIndex"></div>
   </aside>
 
   <article id="pdf-container">
@@ -260,23 +258,6 @@
         <input type=number id="height" value="0" style=" width: 50px">
       </div>
     </div>
-    <script>
-      var coll = document.getElementsByClassName("collapsible");
-      var i;
-      // todo: fix it fully opening on click of the button
-      for (i = 0; i < coll.length; i++) {
-        coll[i].addEventListener("click", function () {
-          console.log(this);
-          this.classList.toggle("active");
-          var content = this.nextElementSibling;
-          if (content.style.display === "block") {
-            content.style.display = "none";
-          } else {
-            content.style.display = "block";
-          }
-        });
-      }    
-    </script>
   </aside>
   <article id="fields-container"></article>
 </body>
