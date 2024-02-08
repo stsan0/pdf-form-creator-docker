@@ -19,7 +19,7 @@ let fields = null;
 const fieldCRUD = new FieldCRUD();
 const pdfContainer = document.getElementById('pdf-container');
 var modal = document.getElementById("myModal");
-document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD) });
+document.getElementById("editFormBtn").addEventListener("click", () => { editForm(pdfDoc, form, fieldCRUD, scale) });
 document.getElementById("displayFieldsBtn").addEventListener("click", displayFields);
 document.getElementById("backBtn").addEventListener("click", backBtn);
 document.getElementById("nextBtn").addEventListener("click", nextBtn);
@@ -177,13 +177,18 @@ async function updateToNewPage() {
 
 // implement zoom buttons with scale
 document.getElementById("zoomInBtn").addEventListener("click", function () {
+    if (pdfDoc == null) { return; }
     scale += 0.5;
+    let zoomPercent = document.getElementById("zoomPercent");
+    zoomPercent.textContent = (scale / 2) * 100 + "%";
     removeOldPage();
     updateToNewPage();
 });
 
 document.getElementById("zoomOutBtn").addEventListener("click", function () {
+    if (pdfDoc == null) { return; }
     scale -= 0.5;
+    zoomPercent.textContent = (scale / 2) * 100 + "%";
     removeOldPage();
     updateToNewPage();
 });
