@@ -1,6 +1,6 @@
 import duplicateFieldChecker from './duplicateFieldChecker.js';
 // Create editable field
-export default async function createEditableField(rect, pageIndex, className, inner, scale = 2) {
+export default async function createEditableField(rect, pageIndex, className, inner, fieldType, scale = 2) {
     let x = rect.x;
     let y = rect.y;
     let width = rect.width;
@@ -10,7 +10,7 @@ export default async function createEditableField(rect, pageIndex, className, in
     fieldText.style.position = 'absolute';
     //const pageHeight = 1584;
     fieldText.setAttribute('data-page', pageIndex);
-
+    fieldText.setAttribute('data-field-type', fieldType); // Save the fieldType
     fieldText.style.left = (x) * scale + 'px';
     fieldText.style.bottom = (y) * scale + 'px';
 
@@ -193,8 +193,10 @@ pdfContainer.addEventListener('drop', function (event) {
         let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
         let y = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
         let pageNumber = document.getElementById("pageIndex").textContent - 1;
+        // get the data type of the field
+        let fieldType = lastDrag.getAttribute('data-field-type');
         // x, y, width, height, pageRectangle, pageNumber, name, value, scale
-        const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ').then(function (editableField) {
+        const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ', fieldType).then(function (editableField) {
             if (editableField == null) {
                 return;
             }

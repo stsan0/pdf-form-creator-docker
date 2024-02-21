@@ -230,7 +230,7 @@ function createEF(field, form, pageNumber) {
 
         //console.log(name + "'s page number: " + pageIndex);
         if (pageNumber === pageIndex) {
-            createEditableField(fieldRect, pageIndex, name, value, scale).then(function (editableField) {
+            createEditableField(fieldRect, pageIndex, name, value, field.constructor.name, scale).then(function (editableField) {
                 const widgetCount = duplicateFieldChecker(editableField);
                 canvas.appendChild(editableField);
                 const innerTextBlock = {
@@ -339,7 +339,27 @@ pdfContainer.addEventListener('drop', function (event) {
     // if the field is not in the form, add it to the form. else, newfield = form.getfield
     let newField = null;
     if (form.getFieldMaybe(editableField.getAttribute('data-field')) == undefined) {
-        newField = form.createTextField(editableField.getAttribute('data-field'))
+        // if field type is PDFTextField2, create a text field
+        if (editableField.getAttribute('data-field-type') == "PDFTextField2") {
+            newField = form.createTextField(editableField.getAttribute('data-field'))
+        }
+        // if field type is PDFCheckBox2, create a checkbox
+        else if (editableField.getAttribute('data-field-type') == "PDFCheckBox2") {
+            newField = form.createCheckBox(editableField.getAttribute('data-field'))
+        }
+        // if field type is PDFRadioGroup2, create a radio group
+        else if (editableField.getAttribute('data-field-type') == "PDFRadioGroup2") {
+            newField = form.createRadioGroup(editableField.getAttribute('data-field'))
+        }
+        // if field type is PDFDropdown2, create a dropdown
+        else if (editableField.getAttribute('data-field-type') == "PDFDropdown2") {
+            newField = form.createDropdown(editableField.getAttribute('data-field'))
+        }
+        // if field type is PDFListbox2, create a listbox
+        else if (editableField.getAttribute('data-field-type') == "PDFListbox2") {
+            newField = form.createListbox(editableField.getAttribute('data-field'))
+        }
+
     }
     else {
         newField = form.getFieldMaybe(editableField.getAttribute('data-field'));
