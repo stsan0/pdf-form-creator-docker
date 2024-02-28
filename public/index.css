@@ -98,9 +98,10 @@ li a {
     /* display: inline-block; */
  }
 
- #toolbox-field{
+#toolbox > * {
+  /* CSS properties for all children of #toolbox */
   width: 100px;
-  height: 12px;
+  height: 20px;
   border: 1px solid #ccc;
   background: #eee;
  }

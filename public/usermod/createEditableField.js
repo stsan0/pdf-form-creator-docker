@@ -156,10 +156,11 @@ let dragging = false;
 let lastDrag = null;
 let startX = null;
 let startY = null;
-// Add event listener for toolbox field drag start
-const toolboxFields = document.querySelectorAll('.editable-field');
-toolboxFields.forEach(toolboxField => {
-    toolboxField.addEventListener('dragstart', function (event) {
+// Add event listener for editable field drag start
+const eFields = document.querySelectorAll('.editable-field');
+eFields.forEach(eField => {
+    eField.addEventListener('dragstart', function (event) {
+        event.preventDefault();
         dragging = true;
         const target = event.target.getBoundingClientRect();
         lastDrag = event.target;
@@ -170,9 +171,24 @@ toolboxFields.forEach(toolboxField => {
 
             event.target.remove();
         }
+        event.dataTransfer.setData('text/plain', eField.dataset.fieldName);
+    });
+});
+
+const toolboxFields = document.querySelectorAll('#toolbox > *');
+toolboxFields.forEach(toolboxField=> {
+    toolboxField.addEventListener('dragstart', function (event) {
+        event.preventDefault();
+        dragging = true;
+        console.log ("dragstart " + event.target.id)
+        const target = event.target.getBoundingClientRect();
+        lastDrag = event.target;
+        startX = event.clientX - target.x;
+        startY = event.clientY - target.y;
         event.dataTransfer.setData('text/plain', toolboxField.dataset.fieldName);
     });
 });
+
 
 pdfContainer.addEventListener('dragstart', function (event) {
     event.preventDefault();
@@ -184,10 +200,12 @@ pdfContainer.addEventListener('dragstart', function (event) {
 pdfContainer.addEventListener('drop', function (event) {
     event.preventDefault();
     dragging = false;
+    console.log("lastDrag: " + lastDrag.id + " " + lastDrag.parentElement.id);
     if (lastDrag == null) {
-        // generate a new field with the toolbox field's name
-        // and the canvas' x and y coordinates
-        console.log("lastDrag is null")
+        console.log("lastDrag is null")      
+    }
+    // else if the lastDrag is a child of id="toolbox" 
+    else if (lastDrag.id == 'toolbox') {
         let width = 100;
         let height = 50;
         let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
@@ -196,7 +214,7 @@ pdfContainer.addEventListener('drop', function (event) {
         // get the data type of the field
         let fieldType = lastDrag.getAttribute('data-field-type');
         // x, y, width, height, pageRectangle, pageNumber, name, value, scale
-        const editableField = createEditableField({ x, y, width, height }, pageNumber, event.target.dataset.fieldName, '   ', fieldType).then(function (editableField) {
+        const editableField = createEditableField({ x, y, width, height }, pageNumber, lastDrag.dataset.fieldName, '   ', fieldType).then(function (editableField) {
             if (editableField == null) {
                 return;
             }
@@ -221,12 +239,11 @@ pdfContainer.addEventListener('drop', function (event) {
 pdfContainer.addEventListener('dragover', function (event) {
     event.preventDefault();
     dragging = false;
-
 });
 
 pdfContainer.onmousemove = function (e) {
     if (dragging == false) return;
-    console.log("dragging")
+    console.log("dragging " + lastDrag.id);
     e.preventDefault(); // include the mouse's distance from 0 to pos1 
     let pos1 = e.clientX - startX - canvas.getBoundingClientRect().left;
     let pdfH = pdfContainer.getBoundingClientRect().bottom + window.scrollY;
@@ -237,8 +254,9 @@ pdfContainer.onmousemove = function (e) {
     // offsetY =  ((pdfHeight - pos2) / pdfHeight) * screenMaxY 
     lastDrag.style.left = pos1 + 'px';
     // add height of the div to the bottom
-    lastDrag.style.bottom = pos2 + 'px';
+    // subtract bottom by the height of the field box 
     lastDrag.style.top = posTop + 'px';
+    lastDrag.style.bottom = pos2 - lastDrag.offsetHeight + 'px';
     const myM = document.getElementById('myModal');
     const efb = document.querySelector('.modal-body'); // if modal-body is not null, show changes in x and y
 
@@ -253,6 +271,29 @@ pdfContainer.onmousemove = function (e) {
 // Add event listener for when mouse button is released
 pdfContainer.addEventListener('mouseup', function (event) {
     dragging = false;
+    // toolbox field drag end; create a new editable field with the toolbox field's data
+    // if the lastDrag is a child of id="toolbox"
+    if (lastDrag == null){
+        return;
+    }
+    if (lastDrag.parentElement.id == 'toolbox') {
+        let width = 100;
+        let height = 50;
+        let x = (event.clientX - event.target.getBoundingClientRect().x) / 2;
+        let y = (event.target.getBoundingClientRect().bottom - event.clientY) / 2;
+        // let pageNumber be the text content of pageIndex before indicator "/"
+        let pageNumber = document.getElementById("pageIndex").textContent.split("/")[0] - 1;
+        // get the data type of the field
+        let fieldType = lastDrag.getAttribute('data-field-type');
+        // x, y, width, height, pageRectangle, pageNumber, name, value, scale
+        const editableField = createEditableField({ x, y, width, height }, pageNumber, lastDrag.dataset.fieldName, '   ', fieldType).then(function (editableField) {
+            if (editableField == null) {
+                return;
+            }
+            duplicateFieldChecker(editableField);
+            canvas.appendChild(editableField);
+        });
+    }
     lastDrag = null;
 });
 

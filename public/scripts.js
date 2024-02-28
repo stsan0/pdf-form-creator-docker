@@ -248,9 +248,8 @@ function createEF(field, form, pageNumber) {
     });
 }
 
-// update existing fieldCRUD and other fields' text and newTitle when a field is edited
-//function pollinate(
-
+// TODO: fields with the same title should be edited to show the same edits when one of their fields is edited
+//function pollinate( 
 
 document.querySelector(".modal-ok").addEventListener("click", function (e) {
     //let modalContent = e.target.parentElement;
@@ -316,8 +315,11 @@ document.querySelector(".modal-ok").addEventListener("click", function (e) {
     }
 });
 
-pdfContainer.addEventListener('drop', function (event) {
+pdfContainer.addEventListener('mouseup', function (event) {
     event.preventDefault();
+    if (event.target.id == 'pdfframe') {
+        return;
+    }
     let editableField = canvas.lastChild;
 
     let innerTextBlock = {
@@ -338,34 +340,37 @@ pdfContainer.addEventListener('drop', function (event) {
     fieldCRUD.createField(editableField.getAttribute('data-field'), innerTextBlock, fieldRect, pageNumber);
     // if the field is not in the form, add it to the form. else, newfield = form.getfield
     let newField = null;
-    if (form.getFieldMaybe(editableField.getAttribute('data-field')) == undefined) {
-        // if field type is PDFTextField2, create a text field
-        if (editableField.getAttribute('data-field-type') == "PDFTextField2") {
-            newField = form.createTextField(editableField.getAttribute('data-field'))
-        }
-        // if field type is PDFCheckBox2, create a checkbox
-        else if (editableField.getAttribute('data-field-type') == "PDFCheckBox2") {
-            newField = form.createCheckBox(editableField.getAttribute('data-field'))
-        }
-        // if field type is PDFRadioGroup2, create a radio group
-        else if (editableField.getAttribute('data-field-type') == "PDFRadioGroup2") {
-            newField = form.createRadioGroup(editableField.getAttribute('data-field'))
-        }
-        // if field type is PDFDropdown2, create a dropdown
-        else if (editableField.getAttribute('data-field-type') == "PDFDropdown2") {
-            newField = form.createDropdown(editableField.getAttribute('data-field'))
-        }
-        // if field type is PDFListbox2, create a listbox
-        else if (editableField.getAttribute('data-field-type') == "PDFListbox2") {
-            newField = form.createListbox(editableField.getAttribute('data-field'))
-        }
+    const fieldType = editableField.getAttribute('data-field-type');
+    const fieldName = editableField.getAttribute('data-field');
 
+    if (form.getFieldMaybe(fieldName) == undefined) {
+        switch (fieldType) {
+            case 'PDFTextField2':
+                newField = form.createTextField(fieldName);
+                break;
+            case 'PDFCheckBox2':
+                newField = form.createCheckBox(fieldName);
+                break;
+            case 'PDFRadioGroup2':
+                newField = form.createRadioGroup(fieldName);
+                break;
+            case 'PDFDropdown2':
+                newField = form.createDropdown(fieldName);
+                break;
+            case 'PDFListbox2':
+                newField = form.createListbox(fieldName);
+                break;
+            default:
+                // Handle unknown field types or provide a default action
+                console.error(`Unknown field type: ${fieldType}`);
+                break;
+        }
     }
     else {
-        newField = form.getFieldMaybe(editableField.getAttribute('data-field'));
-    }
-    if (editableField.innerText != ' ') {
-        newField.setText(editableField.innerText);
+        newField = form.getFieldMaybe(fieldName);
+        let wc = editableField.getAttribute('data-widgetcount');
+        let widgets = newField.acroField.getWidgets();
+        widgets[wc].setRectangle(fieldRect);
     }
     const textPosition = {
         x: parseInt(fieldRect.x) * (1 / scale),
@@ -375,35 +380,6 @@ pdfContainer.addEventListener('drop', function (event) {
     }
     let page = pdfDoc.getPage(parseInt(pageNumber))
     newField.addToPage(page, textPosition);
+    fieldCRUD.setAcrofieldWidgets(editableField.getAttribute('data-field'), fieldRect);
     form.markFieldAsDirty(form.getFieldMaybe(editableField.getAttribute('data-field')).ref);
-});
-
-// Add event listener for when mouse button is released
-pdfContainer.addEventListener('mouseup', function (event) {
-    let efb = event.target;
-    if (efb.id != 'editable-field') {
-        efb = efb.parentElement;
-        if (efb.id != 'editable-field') {
-            efb = null;
-            return;
-        }
-    }
-    console.log("mouseup: " + efb.id)
-    let fieldRect = {
-        x: parseFloat(efb.style.left) * 1 / scale,
-        y: parseFloat(efb.style.bottom) * 1 / scale,
-        width: parseFloat(efb.style.width) * 1 / scale,
-        height: parseFloat(efb.style.height) * 1 / scale
-    }
-    //console.log("bottom is" + efb.style.bottom)
-    fieldCRUD.setAcrofieldWidgets(efb.getAttribute('data-field'), fieldRect);
-    let textField = form.getFieldMaybe(efb.getAttribute('data-field'));
-    if (textField) {
-        let wc = efb.getAttribute('data-widgetcount');
-        let widgets = textField.acroField.getWidgets()
-        widgets[wc].setRectangle(fieldRect);
-    }
-
-    form.markFieldAsDirty(form.getFieldMaybe(efb.getAttribute('data-field')).ref);
-
 });
